@@ -44,6 +44,14 @@ option(MUJOCO_BUILD_TESTS "Build tests for MuJoCo" ON)
 option(MUJOCO_TEST_PYTHON_UTIL "Build and test utility libraries for Python bindings" ON)
 option(MUJOCO_BUILD_USD_PLUGINS "Build OpenUSD plugins" OFF)
 
+# For Emscripten target we shouldn't build these for the moment
+if(EMSCRIPTEN)
+  set(MUJOCO_BUILD_EXAMPLES OFF CACHE BOOL "Build samples for MuJoCo" FORCE)
+  set(MUJOCO_BUILD_SIMULATE OFF CACHE BOOL "Build simulate library for MuJoCo" FORCE)
+  set(MUJOCO_BUILD_TESTS OFF CACHE BOOL "Build tests for MuJoCo" FORCE)
+  set(MUJOCO_TEST_PYTHON_UTIL OFF CACHE BOOL "Build and test utility libraries for Python bindings" FORCE)
+endif()
+
 # USD libs to compile against.
 set(MUJOCO_USD_ALLOWED_TARGET_VALUES "USD" "Houdini")
 set(MUJOCO_USD_TARGET "USD" CACHE STRING "Select the USD target for the project.")
