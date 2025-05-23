@@ -31,7 +31,7 @@ set(MUJOCO_DEP_VERSION_MarchingCubeCpp
     CACHE STRING "Version of `MarchingCubeCpp` to be fetched."
 )
 set(MUJOCO_DEP_VERSION_ccd
-    7931e764a19ef6b21b443376c699bbc9c6d4fba8 # v2.1
+    42e8b31e0233bf4c3894629fc322a04a055479bf # Patched version for Emscripten
     CACHE STRING "Version of `ccd` to be fetched."
 )
 set(MUJOCO_DEP_VERSION_qhull
@@ -215,7 +215,7 @@ findorfetch(
   LIBRARY_NAME
   ccd
   GIT_REPO
-  https://github.com/danfis/libccd.git
+  https://github.com/wpumacay/libccd.git
   GIT_TAG
   ${MUJOCO_DEP_VERSION_ccd}
   TARGETS
