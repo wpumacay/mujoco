@@ -50,6 +50,10 @@ if(EMSCRIPTEN)
   set(MUJOCO_BUILD_SIMULATE OFF CACHE BOOL "Build simulate library for MuJoCo" FORCE)
   set(MUJOCO_BUILD_TESTS OFF CACHE BOOL "Build tests for MuJoCo" FORCE)
   set(MUJOCO_TEST_PYTHON_UTIL OFF CACHE BOOL "Build and test utility libraries for Python bindings" FORCE)
+  # Avoid disruption to building due to deprecated FetchContent_Populate() -> FetchContent_MakeAvailable()
+  set(CMAKE_POLICY_DEFAULT_CMP0169 OLD)
+  # Avoid issue with deprecation error
+  add_compile_options(-Wno-deprecated-literal-operator)
 endif()
 
 # USD libs to compile against.
@@ -211,14 +215,31 @@ endif()
 
 if(NOT (APPLE AND MUJOCO_BUILD_MACOS_FRAMEWORKS))
   # Install the libraries.
-  install(
-    TARGETS mujoco
-    EXPORT ${PROJECT_NAME}
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT runtime
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runtime
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT dev
-    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/mujoco" COMPONENT dev
-  )
+  if(EMSCRIPTEN)
+    install(
+      TARGETS mujoco lodepng
+      EXPORT ${PROJECT_NAME}
+      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT runtime
+      LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runtime
+      ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT dev
+      PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/mujoco" COMPONENT dev
+    )
+
+    install(
+      FILES ${lodepng_SOURCE_DIR}/lodepng.h
+      DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    )
+  else()
+    install(
+      TARGETS mujoco
+      EXPORT ${PROJECT_NAME}
+      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT runtime
+      LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT runtime
+      ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT dev
+      PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/mujoco" COMPONENT dev
+    )
+
+  endif()
 
   set(CONFIG_PACKAGE_LOCATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
