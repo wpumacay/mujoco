@@ -51,6 +51,15 @@ Compile :ref:`mjSpec` to :ref:`mjModel`. A spec can be edited and compiled multi
 :ref:`mjModel` instance that takes the edits into account.
 If compilation fails, :ref:`mj_compile` returns ``NULL``; the error can be read with :ref:`mjs_getError`.
 
+.. _mj_copyBack:
+
+`mj_copyBack <#mj_copyBack>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_copyBack
+
+Copy real-valued arrays from model to spec, returns 1 on success.
+
 .. _mj_recompile:
 
 `mj_recompile <#mj_recompile>`__
@@ -409,7 +418,7 @@ and :math:`\dot q` is the generalized velocity ``mjData.qvel``, then :math:`h = 
 
 .. mujoco-include:: mj_name2id
 
-Get id of object with the specified mjtObj type and name, returns -1 if id not found.
+Get id of object with the specified :ref:`mjtObj` type and name, returns -1 if id not found.
 
 .. _mj_id2name:
 
@@ -418,7 +427,7 @@ Get id of object with the specified mjtObj type and name, returns -1 if id not f
 
 .. mujoco-include:: mj_id2name
 
-Get name of object with the specified mjtObj type and id, returns NULL if name not found.
+Get name of object with the specified :ref:`mjtObj` type and id, returns ``NULL`` if name not found.
 
 .. _mj_fullM:
 
@@ -748,8 +757,7 @@ Compare forward and inverse dynamics, save results in fwdinv.
 Sub components
 ^^^^^^^^^^^^^^
 
-These are sub-components of the simulation pipeline, called internally from the components above. It is very unlikely
-that the user will need to call them.
+These are sub-components of the simulation pipeline, called internally from the components above.
 
 .. _mj_sensorPos:
 
@@ -885,6 +893,18 @@ Compute actuator transmission lengths and moments.
 .. mujoco-include:: mj_crb
 
 Run composite rigid body inertia algorithm (CRB).
+
+.. _mj_makeM:
+
+`mj_makeM <#mj_makeM>`__
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_makeM
+
+Compute the composite rigid body inertia with :ref:`mj_crb`, add terms due
+to :ref:`tendon armature<tendon-spatial-armature>`. The joint-space inertia matrix is stored in both ``mjData.qM`` and
+``mjData.M``. These arrays represent the same quantity using different layouts (parent-based and compressed sparse row,
+respectively).
 
 .. _mj_factorM:
 
@@ -3763,24 +3783,6 @@ Attachment
 
 Attach child to a parent, return the attached element if success or NULL otherwise.
 
-.. _mjs_detachBody:
-
-`mjs_detachBody <#mjs_detachBody>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. mujoco-include:: mjs_detachBody
-
-Delete body and descendants from mjSpec, remove all references, return 0 on success.
-
-.. _mjs_detachDefault:
-
-`mjs_detachDefault <#mjs_detachDefault>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. mujoco-include:: mjs_detachDefault
-
-Delete default class and descendants from mjSpec, remove all references, return 0 on success.
-
 .. _AddTreeElements:
 
 Tree elements
@@ -3864,8 +3866,7 @@ Add frame to body.
 
 .. mujoco-include:: mjs_delete
 
-Delete object corresponding to the given element, return 0 on success. This function should only be used for element
-types that cannot have children, i.e. excluding bodies and default classes.
+Remove object corresponding to the given element, return 0 on success.
 
 .. _AddNonTreeElements:
 
@@ -4226,6 +4227,15 @@ Return spec's next element; return NULL if element is last.
 
 Attribute setters
 ^^^^^^^^^^^^^^^^^
+.. _mjs_setName:
+
+`mjs_setName <#mjs_setName>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mjs_setName
+
+Set element's name, return 0 on success.
+
 .. _mjs_setBuffer:
 
 `mjs_setBuffer <#mjs_setBuffer>`__
@@ -4329,6 +4339,15 @@ Set plugin attributes.
 
 Attribute getters
 ^^^^^^^^^^^^^^^^^
+.. _mjs_getName:
+
+`mjs_getName <#mjs_getName>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mjs_getName
+
+Get element's name.
+
 .. _mjs_getString:
 
 `mjs_getString <#mjs_getString>`__

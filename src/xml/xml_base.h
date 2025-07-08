@@ -18,10 +18,10 @@
 #include <cstdlib>
 #include <string>
 
-#include "tinyxml2.h"
 #include <mujoco/mjmodel.h>
 #include <mujoco/mjspec.h>
 #include "xml/xml_util.h"
+#include "tinyxml2.h"
 
 
 // keyword maps (defined in implementation files)
@@ -92,7 +92,7 @@ class mjXBase : public mjXUtil {
   };
 
   // set the model allocated externally
-  virtual void SetModel(const mjSpec*, const mjModel* = nullptr);
+  virtual void SetModel(mjSpec*, const mjModel* = nullptr);
 
   // read alternative orientation specification
   static int ReadAlternative(tinyxml2::XMLElement* elem, mjsOrientation& alt);

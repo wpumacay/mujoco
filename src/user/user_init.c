@@ -203,7 +203,7 @@ void mjs_defaultLight(mjsLight* light) {
   // intrinsics
   light->castshadow = 1;
   light->bulbradius = 0.02;
-  light->intensity = 1000.0;
+  light->intensity = 0.0;
   light->range = 10.0;
   light->active = 1;
   light->attenuation[0] = 1;
@@ -291,8 +291,8 @@ void mjs_defaultMaterial(mjsMaterial* material) {
   material->texrepeat[0] = material->texrepeat[1] = 1;
   material->specular = 0.5;
   material->shininess = 0.5;
-  material->metallic = 0.0;
-  material->roughness = 1.0;
+  material->metallic = -1.0;
+  material->roughness = -1.0;
   material->rgba[0] = material->rgba[1] = material->rgba[2] = material->rgba[3] = 1;
 }
 

@@ -279,6 +279,11 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  type=AnonymousStructDecl(
                      fields=(
                          StructFieldDecl(
+                             name='cameraid',
+                             type=ValueType(name='int'),
+                             doc='initial camera id (-1: free)',
+                         ),
+                         StructFieldDecl(
                              name='orthographic',
                              type=ValueType(name='int'),
                              doc='is the free camera orthographic (0: no, 1: yes)',  # pylint: disable=line-too-long
@@ -867,6 +872,11 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  name='nbvhdynamic',
                  type=ValueType(name='int'),
                  doc='number of dynamic bounding volumes (aabb stored in mjData)',  # pylint: disable=line-too-long
+             ),
+             StructFieldDecl(
+                 name='noct',
+                 type=ValueType(name='int'),
+                 doc='number of total octree cells in all meshes',
              ),
              StructFieldDecl(
                  name='njnt',
@@ -1556,6 +1566,30 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  array_extent=('nbvhstatic', 6),
              ),
              StructFieldDecl(
+                 name='oct_depth',
+                 type=PointerType(
+                     inner_type=ValueType(name='int'),
+                 ),
+                 doc='depth in the octree',
+                 array_extent=('noct',),
+             ),
+             StructFieldDecl(
+                 name='oct_child',
+                 type=PointerType(
+                     inner_type=ValueType(name='int'),
+                 ),
+                 doc='children of octree node',
+                 array_extent=('noct', 8),
+             ),
+             StructFieldDecl(
+                 name='oct_aabb',
+                 type=PointerType(
+                     inner_type=ValueType(name='mjtNum'),
+                 ),
+                 doc='octree node bounding box (center, size)',
+                 array_extent=('noct', 6),
+             ),
+             StructFieldDecl(
                  name='jnt_type',
                  type=PointerType(
                      inner_type=ValueType(name='int'),
@@ -2225,6 +2259,14 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='int'),
                  ),
                  doc='spot, directional, etc. (mjtLightType)',
+                 array_extent=('nlight',),
+             ),
+             StructFieldDecl(
+                 name='light_texid',
+                 type=PointerType(
+                     inner_type=ValueType(name='int'),
+                 ),
+                 doc='texture id for image lights',
                  array_extent=('nlight',),
              ),
              StructFieldDecl(
@@ -2905,6 +2947,22 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='int'),
                  ),
                  doc='number of bvh',
+                 array_extent=('nmesh',),
+             ),
+             StructFieldDecl(
+                 name='mesh_octadr',
+                 type=PointerType(
+                     inner_type=ValueType(name='int'),
+                 ),
+                 doc='address of octree root',
+                 array_extent=('nmesh',),
+             ),
+             StructFieldDecl(
+                 name='mesh_octnum',
+                 type=PointerType(
+                     inner_type=ValueType(name='int'),
+                 ),
+                 doc='number of octree nodes',
                  array_extent=('nmesh',),
              ),
              StructFieldDecl(
@@ -6567,7 +6625,7 @@ STRUCTS: Mapping[str, StructDecl] = dict([
              StructFieldDecl(
                  name='dataid',
                  type=ValueType(name='int'),
-                 doc='mesh, hfield or plane id; -1: none',
+                 doc='mesh, hfield or plane id; -1: none; mesh: 2*id or 2*id+1 (hull)',  # pylint: disable=line-too-long
              ),
              StructFieldDecl(
                  name='objtype',
@@ -6701,6 +6759,11 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  name='type',
                  type=ValueType(name='int'),
                  doc='type (mjtLightType)',
+             ),
+             StructFieldDecl(
+                 name='texid',
+                 type=ValueType(name='int'),
+                 doc='texture id for image lights',
              ),
              StructFieldDecl(
                  name='attenuation',
@@ -6854,6 +6917,11 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  name='bvh_depth',
                  type=ValueType(name='int'),
                  doc='depth of the bounding volume hierarchy to be visualized',
+             ),
+             StructFieldDecl(
+                 name='oct_depth',
+                 type=ValueType(name='int'),
+                 doc='depth of the octree to be visualized',
              ),
              StructFieldDecl(
                  name='flex_layer',
@@ -8155,13 +8223,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='childclass',
                  type=PointerType(
                      inner_type=ValueType(name='mjString'),
@@ -8280,13 +8341,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='childclass',
                  type=PointerType(
                      inner_type=ValueType(name='mjString'),
@@ -8334,13 +8388,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='type',
@@ -8506,13 +8553,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='type',
@@ -8716,13 +8756,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='pos',
                  type=ArrayType(
                      inner_type=ValueType(name='double'),
@@ -8811,13 +8844,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='pos',
@@ -8952,13 +8978,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='pos',
                  type=ArrayType(
                      inner_type=ValueType(name='double'),
@@ -8995,6 +9014,13 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  name='type',
                  type=ValueType(name='mjtLightType'),
                  doc='type of light',
+             ),
+             StructFieldDecl(
+                 name='texture',
+                 type=PointerType(
+                     inner_type=ValueType(name='mjString'),
+                 ),
+                 doc='texture name for image lights',
              ),
              StructFieldDecl(
                  name='castshadow',
@@ -9078,13 +9104,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='contype',
@@ -9306,13 +9325,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='content_type',
                  type=PointerType(
                      inner_type=ValueType(name='mjString'),
@@ -9427,13 +9439,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='content_type',
                  type=PointerType(
                      inner_type=ValueType(name='mjString'),
@@ -9492,13 +9497,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='file',
@@ -9608,13 +9606,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='type',
@@ -9756,13 +9747,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='textures',
                  type=PointerType(
                      inner_type=ValueType(name='mjStringVec'),
@@ -9840,13 +9824,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='geomname1',
@@ -9931,13 +9908,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='bodyname1',
                  type=PointerType(
                      inner_type=ValueType(name='mjString'),
@@ -9971,13 +9941,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='type',
@@ -10052,13 +10015,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='stiffness',
@@ -10224,13 +10180,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='gaintype',
@@ -10411,13 +10360,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='type',
                  type=ValueType(name='mjtSensor'),
                  doc='type of sensor',
@@ -10505,13 +10447,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='data',
                  type=PointerType(
                      inner_type=ValueType(name='mjDoubleVec'),
@@ -10545,13 +10480,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='element type',
              ),
              StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
-             ),
-             StructFieldDecl(
                  name='data',
                  type=PointerType(
                      inner_type=ValueType(name='mjString'),
@@ -10578,13 +10506,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='objtype',
@@ -10627,13 +10548,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='name',
              ),
              StructFieldDecl(
                  name='time',
@@ -10702,13 +10616,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjsElement'),
                  ),
                  doc='element type',
-             ),
-             StructFieldDecl(
-                 name='name',
-                 type=PointerType(
-                     inner_type=ValueType(name='mjString'),
-                 ),
-                 doc='class name',
              ),
              StructFieldDecl(
                  name='joint',

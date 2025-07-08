@@ -583,8 +583,7 @@ Fast implicit-in-velocity (``implicitfast``)
     performance.
 
     **Euler**:
-     Use ``Euler`` for compatibillity with older models and :ref:`MJX<Mjx>`. Specifically for MJX,
-     setting the :ref:`eulerdamp<option-flag-eulerdamp>` disable flag can :ref:`improve performance<MjxPerformance>`.
+     Use ``Euler`` for compatibillity with older models.
     **implicitfast**:
      The ``implicitfast`` integrator has similar computational cost to ``Euler``, yet provides
      increased stability, and is therefore a strict improvement. It is the recommended integrator for most models.
@@ -1692,7 +1691,7 @@ The stages below compute quantities that depend on the generalized positions ``m
 4. Compute quantities related to :ref:`flex<deformable-flex>` objects: :ref:`mj_flex`
 5. Compute the tendon lengths and moment arms. This includes the computation of minimal-length paths for spatial
    tendons: :ref:`mj_tendon`
-6. Compute the composite rigid body inertias and joint-space inertia matrix: :ref:`mj_crb`
+6. Compute the composite rigid body inertias and joint-space inertia matrix: :ref:`mj_makeM`
 7. Compute the sparse factorization of the joint-space inertia matrix: :ref:`mj_factorM`
 8. Construct the list of active contacts. This includes both broad-phase and near-phase collision detection:
    :ref:`mj_collision`

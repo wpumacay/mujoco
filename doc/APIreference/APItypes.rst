@@ -197,6 +197,16 @@ uses RGB textures.  These values are used to store the texture index in the mate
 .. mujoco-include:: mjtTextureRole
 
 
+.. _mjtColorSpace:
+
+mjtColorSpace
+~~~~~~~~~~~~~
+
+Type of color space encoding for textures.
+
+.. mujoco-include:: mjtColorSpace
+
+
 .. _mjtIntegrator:
 
 mjtIntegrator
@@ -914,7 +924,7 @@ mjSolverStat
 
 This is the data structure holding information about one solver iteration. ``mjData.solver`` is a preallocated array
 of mjSolverStat data structures, one for each iteration of the solver, up to a maximum of mjNSOLVER. The actual number
-of solver iterations is given by ``mjData.solver_iter``.
+of solver iterations is given by ``mjData.solver_niter``.
 
 .. mujoco-include:: mjSolverStat
 

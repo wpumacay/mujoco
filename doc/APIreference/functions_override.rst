@@ -113,8 +113,14 @@ Integrates the simulation state using an implicit-in-velocity integrator (either
 
 .. _Subcomponents:
 
-These are sub-components of the simulation pipeline, called internally from the components above. It is very unlikely
-that the user will need to call them.
+These are sub-components of the simulation pipeline, called internally from the components above.
+
+.. _mj_makeM:
+
+Compute the composite rigid body inertia with :ref:`mj_crb`, add terms due
+to :ref:`tendon armature<tendon-spatial-armature>`. The joint-space inertia matrix is stored in both ``mjData.qM`` and
+``mjData.M``. These arrays represent the same quantity using different layouts (parent-based and compressed sparse row,
+respectively).
 
 .. _mj_factorM:
 
@@ -224,6 +230,14 @@ This function computes the ``3 x nv`` angular momentum matrix :math:`H(q)`, prov
 generalized velocities to subtree angular momentum. More precisely if :math:`h` is the subtree angular momentum of
 body index ``body`` in ``mjData.subtree_angmom`` (reported by the :ref:`subtreeangmom<sensor-subtreeangmom>` sensor)
 and :math:`\dot q` is the generalized velocity ``mjData.qvel``, then :math:`h = H \dot q`.
+
+.. _mj_name2id:
+
+Get id of object with the specified :ref:`mjtObj` type and name, returns -1 if id not found.
+
+.. _mj_id2name:
+
+Get name of object with the specified :ref:`mjtObj` type and id, returns ``NULL`` if name not found.
 
 .. _mj_geomDistance:
 
@@ -704,8 +718,3 @@ to the inputs. Below, :math:`\bar q` denotes the pre-modified quaternion:
 
 Note that derivatives depend only on :math:`h` and :math:`v` (in fact, on :math:`s = h v`).
 All outputs are optional.
-
-.. _mjs_delete:
-
-Delete object corresponding to the given element, return 0 on success. This function should only be used for element
-types that cannot have children, i.e. excluding bodies and default classes.

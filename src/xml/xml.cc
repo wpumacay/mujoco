@@ -27,8 +27,6 @@
 #include <string_view>
 #include <unordered_set>
 
-#include "tinyxml2.h"
-
 #include <mujoco/mujoco.h>
 #include <mujoco/mjmodel.h>
 #include <mujoco/mjplugin.h>
@@ -42,6 +40,7 @@
 #include "xml/xml_native_writer.h"
 #include "xml/xml_urdf.h"
 #include "xml/xml_util.h"
+#include "tinyxml2.h"
 
 namespace {
 
@@ -395,7 +394,7 @@ mjSpec* ParseSpecFromString(std::string_view xml, const mjVFS* vfs, char* error,
 }
 
 // Main writer function - calls mjXWrite
-std::string WriteXML(const mjModel* m, const mjSpec* spec, char* error, int nerror) {
+std::string WriteXML(const mjModel* m, mjSpec* spec, char* error, int nerror) {
   LocaleOverride locale_override;
 
   // check for empty model

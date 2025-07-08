@@ -249,6 +249,11 @@ class SupportTest(parameterized.TestCase):
           dx.bind(mx, s.joints[i]).qacc,
           d.qacc[m.jnt_dofadr[i]:m.jnt_dofadr[i] + dofnum[i]], decimal=6
       )
+      np.testing.assert_array_almost_equal(
+          dx.bind(mx, s.joints[i]).qfrc_actuator,
+          d.qfrc_actuator[m.jnt_dofadr[i] : m.jnt_dofadr[i] + dofnum[i]],
+          decimal=6,
+      )
 
     np.testing.assert_array_equal(dx.bind(mx, s.actuators).ctrl, d.ctrl)
     for i in range(m.nu):
@@ -344,7 +349,7 @@ class SupportTest(parameterized.TestCase):
     ):
       print(dx.bind(mx, s.actuators).set('actuator_ctrl', [1, 2, 3]))
     with self.assertRaisesRegex(
-        AttributeError, 'qpos, qvel, qacc are not available for this type'
+        AttributeError, 'qpos, qvel, qacc, qfrc are not available for this type'
     ):
       print(dx.bind(mx, s.geoms).qpos)
 
@@ -373,6 +378,19 @@ class SupportTest(parameterized.TestCase):
         'mjSpec signature does not match mjx.Model signature:'
         ' 15297169659434471387 != 2785811613804955188',
     )
+
+    # what happens when we bind to an actuator that was removed?
+    bygone_actuators = []
+    for act in s.actuators:
+      bygone_actuators.append(act)
+      s.delete(act)
+    m = s.compile()
+    d = mujoco.MjData(m)
+    mx = mjx.put_model(m)
+    dx = mjx.put_data(m, d)
+    dx = mjx.step(mx, dx)
+    with self.assertRaisesRegex(KeyError, 'invalid id: -1'):
+      dx.bind(mx, bygone_actuators)
 
   _CONTACTS = """
     <mujoco>

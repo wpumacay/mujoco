@@ -75,6 +75,7 @@
     X( nbvh )               \
     X( nbvhstatic )         \
     X( nbvhdynamic )        \
+    X( noct )               \
     X( njnt )               \
     X( ngeom )              \
     X( nsite )              \
@@ -216,6 +217,9 @@
     X   ( int,     bvh_child,             nbvh,          2                    ) \
     X   ( int,     bvh_nodeid,            nbvh,          1                    ) \
     X   ( mjtNum,  bvh_aabb,              nbvhstatic,    6                    ) \
+    X   ( int,     oct_depth,             noct,          1                    ) \
+    X   ( int,     oct_child,             noct,          8                    ) \
+    X   ( mjtNum,  oct_aabb,              noct,          6                    ) \
     X   ( int,     jnt_type,              njnt,          1                    ) \
     X   ( int,     jnt_qposadr,           njnt,          1                    ) \
     X   ( int,     jnt_dofadr,            njnt,          1                    ) \
@@ -300,6 +304,7 @@
     X   ( int,     light_bodyid,          nlight,        1                    ) \
     X   ( int,     light_targetbodyid,    nlight,        1                    ) \
     X   ( int,     light_type,            nlight,        1                    ) \
+    X   ( int,     light_texid,           nlight,        1                    ) \
     X   ( mjtByte, light_castshadow,      nlight,        1                    ) \
     X   ( float,   light_bulbradius,      nlight,        1                    ) \
     X   ( float,   light_intensity,       nlight,        1                    ) \
@@ -389,6 +394,8 @@
     X   ( int,     mesh_facenum,          nmesh,         1                    ) \
     X   ( int,     mesh_bvhadr,           nmesh,         1                    ) \
     X   ( int,     mesh_bvhnum,           nmesh,         1                    ) \
+    X   ( int,     mesh_octadr,           nmesh,         1                    ) \
+    X   ( int,     mesh_octnum,           nmesh,         1                    ) \
     X   ( int,     mesh_graphadr,         nmesh,         1                    ) \
     X   ( mjtNum,  mesh_scale,            nmesh,         3                    ) \
     X   ( mjtNum,  mesh_pos,              nmesh,         3                    ) \
