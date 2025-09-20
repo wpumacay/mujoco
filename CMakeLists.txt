@@ -44,6 +44,7 @@ option(MUJOCO_BUILD_SIMULATE "Build simulate library for MuJoCo" ON)
 option(MUJOCO_BUILD_TESTS "Build tests for MuJoCo" ON)
 option(MUJOCO_TEST_PYTHON_UTIL "Build and test utility libraries for Python bindings" ON)
 option(MUJOCO_WITH_USD "Build with OpenUSD" OFF)
+option(MUJOCO_BUILD_TESTS_WILBERT "Build tests under test/wilbert/cpp folder" ON)
 
 # Option to provide a path to an existing USD build directory or to Houdini HFS directory.
 set(USD_DIR "" CACHE PATH "Path to an existing USD build directory.")
@@ -213,6 +214,10 @@ if(BUILD_TESTING AND MUJOCO_BUILD_TESTS)
   if(MUJOCO_TEST_PYTHON_UTIL)
     add_subdirectory(python/mujoco/util)
   endif()
+endif()
+
+if(MUJOCO_BUILD_TESTS_WILBERT)
+  add_subdirectory(test/wilbert/cpp)
 endif()
 
 if(NOT (APPLE AND MUJOCO_BUILD_MACOS_FRAMEWORKS))
