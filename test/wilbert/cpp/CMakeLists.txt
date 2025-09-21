@@ -79,11 +79,13 @@ if(NOT TARGET mujoco::mujoco)
     return()
 endif()
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party/fmt)
+
 set(TESTS_WILBERT_LIST
     ${CMAKE_CURRENT_SOURCE_DIR}/test_gridlayout.cpp
 )
 
 foreach(ex_filepath IN LISTS TESTS_WILBERT_LIST)
-  wp_setup_single_file_example(${ex_filepath} TARGET_DEPENDENCIES mujoco::mujoco)
+  wp_setup_single_file_example(${ex_filepath} TARGET_DEPENDENCIES mujoco::mujoco fmt::fmt)
 endforeach()
 

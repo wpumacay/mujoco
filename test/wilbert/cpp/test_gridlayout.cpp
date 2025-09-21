@@ -1,10 +1,14 @@
 #include <array>
-#include <iostream>
 #include <filesystem>
+#include <iostream>
+#include <string>
+
+#include <fmt/base.h>
+#include <fmt/format.h>
 
 #include <mujoco/mujoco.h>
 
-constexpr const char* XML_STRING = R"(
+constexpr const char *XML_STRING = R"(
 <mujoco model="empty-scene">
   <visual>
     <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
@@ -27,28 +31,31 @@ constexpr const char* XML_STRING = R"(
 </mujoco>
 )";
 
-constexpr const char* TEXTURE_SKYBOX_NAME = "SkyOakland";
-
+constexpr const char *TEXTURE_SKYBOX_NAME = "SkyOakland";
 
 auto main() -> int {
-    std::array<char, 1000> err;
-    auto spec = mj_parseXMLString(XML_STRING, nullptr, err.data(), err.size());
-    if (!spec) {
-        std::cout << "There was an error while making a spec from given string" << std::endl:
-        std::cout << err.data() << std::endl;
-        return 1;
-    }
+  auto xml_model_str = fmt::format(XML_STRING, "foo");
+  fmt::print(xml_model_str);
+  std::cout << std::endl;
+  std::cout << std::endl;
 
-    mjsTexture* skybox_texture = nullptr;
-    auto tex = mjs_firstElement(spec, mjOBJ_TEXTURE);
-    while (tex) {
-        
-        tex = mjs_nextElement(spec, tex);
-    }
+  std::array<char, 1000> err;
+  auto spec = mj_parseXMLString(XML_STRING, nullptr, err.data(), err.size());
+  if (!spec) {
+    std::cout << "There was an error while making a spec from given string"
+              << std::endl;
+    std::cout << err.data() << std::endl;
+    return 1;
+  }
 
+  auto skybox_texture =
+      mjs_asTexture(mjs_findElement(spec, mjOBJ_TEXTURE, TEXTURE_SKYBOX_NAME));
+  if (skybox_texture) {
+    std::cout << "gridlayout: " << skybox_texture->gridlayout << std::endl;
+    std::cout << "gridsize: " << skybox_texture->gridsize << std::endl;
+  }
 
-    return 0;
+  mj_deleteSpec(spec);
+
+  return 0;
 }
-
-
-

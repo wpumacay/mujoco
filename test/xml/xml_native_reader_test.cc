@@ -1967,6 +1967,16 @@ TEST_F(XMLReaderTest, ResizeKeyframeAfterParsing) {
   mj_deleteVFS(vfs.get());
 }
 
+// TEST_F(XMLReaderTest, CheckTextureGridlayoutParsing) {
+//   static constexpr char xml[] = R"(
+//   <mujoco>
+//     <asset>
+//       <texture name="test_skybox" type="skybox" file="test_skybox_image.png" gridsize="2 4" gridlayout="LFRB.D.."/>
+//     </asset>
+//   </mujoco>
+//   )";
+// }
+
 // ----------------------- test camera parsing ---------------------------------
 
 TEST_F(XMLReaderTest, CameraInvalidFovyAndSensorsize) {
