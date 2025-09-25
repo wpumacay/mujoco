@@ -8,6 +8,8 @@
 
 #include <mujoco/mujoco.h>
 
+namespace fs = std::filesystem;
+
 constexpr const char *XML_STRING = R"(
 <mujoco model="empty-scene">
   <visual>
@@ -18,7 +20,7 @@ constexpr const char *XML_STRING = R"(
 
   <asset>
     <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072"/>
-    <texture name="SkyOakland" type="skybox" file="{0}/assets/SkyOakland.png" gridsize="2 4" gridlayout="LFRB.D.."/>
+    <texture name="SkyOakland" type="skybox" file="{0}" gridsize="2 4" gridlayout="LFRB.D.."/>
     <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3"
       markrgb="0.8 0.8 0.8" width="300" height="300"/>
     <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2"/>
@@ -31,16 +33,23 @@ constexpr const char *XML_STRING = R"(
 </mujoco>
 )";
 
-constexpr const char *TEXTURE_SKYBOX_NAME = "SkyOakland";
+constexpr const char *TEXTURE_SKYBOX_NAME = "SkyOakland.png";
 
 auto main() -> int {
-  auto xml_model_str = fmt::format(XML_STRING, "foo");
-  fmt::print(xml_model_str);
-  std::cout << std::endl;
   std::cout << std::endl;
 
+  fmt::print("File path: {0}\n", __FILE__);
+
+  fs::path current_path = __FILE__;
+  auto skybox_path =
+      current_path.parent_path().parent_path() / "assets" / TEXTURE_SKYBOX_NAME;
+
+  auto xml_model_str = fmt::format(XML_STRING, skybox_path.c_str());
+  fmt::print("{0}\n", xml_model_str);
+
   std::array<char, 1000> err;
-  auto spec = mj_parseXMLString(XML_STRING, nullptr, err.data(), err.size());
+  auto spec =
+      mj_parseXMLString(xml_model_str.c_str(), nullptr, err.data(), err.size());
   if (!spec) {
     std::cout << "There was an error while making a spec from given string"
               << std::endl;
@@ -48,11 +57,21 @@ auto main() -> int {
     return 1;
   }
 
-  auto skybox_texture =
-      mjs_asTexture(mjs_findElement(spec, mjOBJ_TEXTURE, TEXTURE_SKYBOX_NAME));
+  auto skybox_texture = mjs_asTexture(
+      mjs_findElement(spec, mjOBJ_TEXTURE, skybox_path.stem().c_str()));
   if (skybox_texture) {
     std::cout << "gridlayout: " << skybox_texture->gridlayout << std::endl;
     std::cout << "gridsize: " << skybox_texture->gridsize << std::endl;
+  }
+
+  // Just test that an mjModel can be created
+  auto model = mj_compile(spec, nullptr);
+  if (!model) {
+    fmt::print("There was an error when trying to create an mjModel\n");
+  }
+  else{
+    fmt::print("Successfully created an mjModel :D\n");
+    mj_deleteModel(model);
   }
 
   mj_deleteSpec(spec);
