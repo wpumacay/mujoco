@@ -1302,8 +1302,7 @@ const char* mju_warningText(int warning, size_t info) {
 
   case mjWARN_CONTACTFULL:
     mjSNPRINTF(str,
-               "Too many contacts. Either the arena memory is full, or nconmax is specified and is "
-               "exceeded. Increase arena memory allocation, or increase/remove nconmax. "
+               "Too many contacts. The arena memory is full, increase arena memory allocation."
                "(ncon = %zu)", info);
     break;
 
@@ -1351,9 +1350,35 @@ int mju_isBad(mjtNum x) {
 
 
 // return 1 if all elements are 0
-int mju_isZero(mjtNum* vec, int n) {
+int mju_isZero(const mjtNum* vec, int n) {
   for (int i=0; i < n; i++) {
     if (vec[i] != 0) {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+
+
+// return 1 if all elements are 0
+int mju_isZeroByte(const unsigned char* vec, int n) {
+  size_t i = 0;
+
+  // unroll using 8-byte chunks
+  const uint64_t* vec64 = (const uint64_t*)vec;
+  size_t n64 = n / sizeof(uint64_t);
+  for (; i < n64; ++i) {
+    if (vec64[i]) {
+      return 0;
+    }
+  }
+
+  // remaining bytes
+  i *= sizeof(uint64_t);
+  for (; i < n; ++i) {
+    if (vec[i]) {
       return 0;
     }
   }
@@ -1368,15 +1393,6 @@ void mju_zeroInt(int* res, int n) {
   memset(res, 0, n*sizeof(int));
 }
 
-// set mjtSize vector to 0
-void mju_zeroSize(mjtSize* res, size_t n) {
-  memset(res, 0, n*sizeof(mjtSize));
-}
-
-// set size_t vector to 0
-void mju_zeroSizeT(size_t* res, size_t n) {
-  memset(res, 0, n*sizeof(size_t));
-}
 
 
 // copy int vector vec into res

@@ -2,8 +2,31 @@
 Changelog
 =========
 
-3.3.6 (September 15, 2025)
+Upcoming version (not yet released)
 -----------------------------------
+
+General
+^^^^^^^
+
+.. admonition:: Breaking API changes
+   :class: attention
+
+   - The mjSpec C API fields :ref:`meshdir<compiler-meshdir>` and :ref:`texturedir<compiler-texturedir>` have been moved
+     to `compiler.meshdir <https://github.com/google-deepmind/mujoco/blob/0baac589993220095cf09e153f194f35ca0f0738/include/mujoco/mjspec.h#L154>`__ and
+     `compiler.texturedir <https://github.com/google-deepmind/mujoco/blob/0baac589993220095cf09e153f194f35ca0f0738/include/mujoco/mjspec.h#L155>`__
+     respectively. For backwards compatibility, the old fields are still available in the Python API but will be removed
+     in a future release.
+
+     **Migration:** Replace ``meshdir`` and ``texturedir`` with ``compiler.meshdir`` and ``compiler.texturedir``.
+
+- Joint decorators and spatial tendons which have limits defined and whose current value (angle or length) exceeds the
+  limit, are recolored by using the :ref:`constraint impedance<soParameters>` :math:`d` to mix the existing color with
+  :ref:`visual/rgba/constraint<visual-rgba-constraint>`. For spatial tendons, this visualization aid is active only if
+  no :ref:`material<tendon-spatial-material>` is set and :ref:`rgba<tendon-spatial-rgba>` is default.
+
+
+Version 3.3.6 (September 15, 2025)
+----------------------------------
 
 General
 ^^^^^^^
