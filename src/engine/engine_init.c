@@ -45,7 +45,6 @@ void mj_defaultSolRefImp(mjtNum* solref, mjtNum* solimp) {
 }
 
 
-
 //------------------------------- mjOption ---------------------------------------------------------
 
 // set model options to default values
@@ -55,7 +54,6 @@ void mj_defaultOption(mjOption* opt) {
 
   // timing parameters
   opt->timestep           = 0.002;
-  opt->apirate            = 100;
 
   // solver parameters
   opt->impratio           = 1;
@@ -105,8 +103,6 @@ void mj_defaultOption(mjOption* opt) {
 }
 
 
-
-
 //------------------------------- mjStatistic ------------------------------------------------------
 
 // set statistics to default values; compute later in compiler
@@ -117,7 +113,6 @@ void mj_defaultStatistic(mjStatistic* stat) {
   stat->meanmass = 1;
   stat->meansize = 0.2;
 }
-
 
 
 //------------------------------- mjVisual ---------------------------------------------------------
@@ -228,8 +223,6 @@ void mj_defaultVisual(mjVisual* vis) {
   setf4(vis->rgba.bv,               0., 1., .0, .5);
   setf4(vis->rgba.bvactive,         1., 0., .0, .5);
 }
-
-
 
 
 //------------------------------ mjLROpt -----------------------------------------------------------

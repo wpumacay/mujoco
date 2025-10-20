@@ -62,6 +62,12 @@ int mju_insideGeom(const mjtNum pos[3], const mjtNum mat[9], const mjtNum size[3
 // evaluate the deformation gradient at p using the nodal dof values
 MJAPI void mju_defGradient(mjtNum res[9], const mjtNum p[3], const mjtNum* dof, int order);
 
+// evaluate the basis function at x for the i-th node
+MJAPI mjtNum mju_evalBasis(const mjtNum x[3], int i, int order);
+
+// interpolate a function at x with given interpolation coefficients and order n
+MJAPI void mju_interpolate3D(mjtNum res[3], const mjtNum x[3], const mjtNum* coeff, int order);
+
 // ----------------------------- Base64 -----------------------------------------------------------
 
 // encode data as Base64 into buf (including padding and null char)
@@ -136,7 +142,7 @@ MJAPI int mju_isBad(mjtNum x);
 // return 1 if all elements are numerically 0 (-0.0 treated as zero)
 MJAPI int mju_isZero(const mjtNum* vec, int n);
 
-// return 1 if all elements are 0x00, can be ~2x faster than mju_isZero
+// return 1 if all elements are 0x00, faster than mju_isZero
 MJAPI int mju_isZeroByte(const unsigned char* vec, int n);
 
 // set integer vector to 0

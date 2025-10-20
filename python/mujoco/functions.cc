@@ -99,6 +99,14 @@ PYBIND11_MODULE(_functions, pymodule) {
         return std::string(buffer.get(), out_length);
       });
 
+  DEF_WITH_OMITTED_PY_ARGS(traits::mju_getXMLDependencies,
+                           "dependencies")(
+      pymodule, [](const char* filename){
+        mjStringVec dependencies;
+        InterceptMjErrors(::mju_getXMLDependencies)(filename, &dependencies);
+        return dependencies;
+      });
+
   // Main simulation
   pymodule.def(
       "mj_step",
@@ -174,6 +182,8 @@ PYBIND11_MODULE(_functions, pymodule) {
   Def<traits::mj_printModel>(pymodule);
   Def<traits::mj_printFormattedData>(pymodule);
   Def<traits::mj_printData>(pymodule);
+  Def<traits::mj_printFormattedScene>(pymodule);
+  Def<traits::mj_printScene>(pymodule);
   DEF_WITH_OMITTED_PY_ARGS(traits::mju_printMat, "nr", "nc")(
       pymodule,
       [](Eigen::Ref<const EigenArrayXX> mat) {

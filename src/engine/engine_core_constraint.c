@@ -22,6 +22,7 @@
 #include <mujoco/mjmodel.h>
 #include <mujoco/mjsan.h>  // IWYU pragma: keep
 #include <mujoco/mjxmacro.h>
+#include "engine/engine_init.h"
 #include "engine/engine_core_util.h"
 #include "engine/engine_core_smooth.h"
 #include "engine/engine_memory.h"
@@ -43,7 +44,6 @@
 
 
 //-------------------------- utility functions -----------------------------------------------------
-
 
 
 // allocate efc arrays on arena, return 1 on success, 0 on failure
@@ -83,7 +83,6 @@ static int arenaAllocEfc(const mjModel* m, mjData* d) {
 }
 
 
-
 // determine type of solver
 int mj_isDual(const mjModel* m) {
   if (m->opt.solver == mjSOL_PGS || m->opt.noslip_iterations > 0) {
@@ -92,7 +91,6 @@ int mj_isDual(const mjModel* m) {
     return 0;
   }
 }
-
 
 
 // assign/clamp contact friction parameters
@@ -110,7 +108,6 @@ void mj_assignFriction(const mjModel* m, mjtNum* target, const mjtNum* source) {
 
 
 
-
 // assign/override contact reference parameters
 void mj_assignRef(const mjModel* m, mjtNum* target, const mjtNum* source) {
   if (mjENABLED(mjENBL_OVERRIDE)) {
@@ -119,7 +116,6 @@ void mj_assignRef(const mjModel* m, mjtNum* target, const mjtNum* source) {
     mju_copy(target, source, mjNREF);
   }
 }
-
 
 
 // assign/override contact impedance parameters
@@ -132,7 +128,6 @@ void mj_assignImp(const mjModel* m, mjtNum* target, const mjtNum* source) {
 }
 
 
-
 // assign/override contact margin
 mjtNum mj_assignMargin(const mjModel* m, mjtNum source) {
   if (mjENABLED(mjENBL_OVERRIDE)) {
@@ -141,7 +136,6 @@ mjtNum mj_assignMargin(const mjModel* m, mjtNum source) {
     return source;
   }
 }
-
 
 
 // compute element bodies and weights for given contact point, return #bodies
@@ -183,7 +177,6 @@ static int mj_elemBodyWeight(const mjModel* m, const mjData* d, int f, int e, in
 }
 
 
-
 // compute body weights for a given contact vertex, return #bodies
 static int mj_vertBodyWeight(const mjModel* m, const mjData* d, int f, int v,
                              const mjtNum point[3], int* body, mjtNum* weight, mjtNum bw) {
@@ -193,9 +186,7 @@ static int mj_vertBodyWeight(const mjModel* m, const mjData* d, int f, int v,
   int nb = 0;
 
   for (int i = nstart; i < nend; i++) {
-    mjtNum w = ((i-nstart)&1 ? coord[2] : 1-coord[2]) *
-               ((i-nstart)&2 ? coord[1] : 1-coord[1]) *
-               ((i-nstart)&4 ? coord[0] : 1-coord[0]);
+    mjtNum w = mju_evalBasis(coord, i-nstart, m->flex_interp[f]);
     if (w < 1e-5) {
       continue;
     }
@@ -205,7 +196,6 @@ static int mj_vertBodyWeight(const mjModel* m, const mjData* d, int f, int v,
 
   return nb;
 }
-
 
 
 // add contact to d->contact list; return 0 if success; 1 if buffer full
@@ -230,7 +220,6 @@ int mj_addContact(const mjModel* m, mjData* d, const mjContact* con) {
   d->ncon++;
   return 0;
 }
-
 
 
 // add #size rows to constraint Jacobian; set pos, margin, frictionloss, type, id
@@ -328,7 +317,6 @@ static void mj_addConstraint(const mjModel* m, mjData* d,
 }
 
 
-
 // multiply Jacobian by vector
 void mj_mulJacVec(const mjModel* m, const mjData* d, mjtNum* res, const mjtNum* vec) {
   // exit if no constraints
@@ -349,7 +337,6 @@ void mj_mulJacVec(const mjModel* m, const mjData* d, mjtNum* res, const mjtNum* 
 }
 
 
-
 // multiply JacobianT by vector
 void mj_mulJacTVec(const mjModel* m, const mjData* d, mjtNum* res, const mjtNum* vec) {
   // exit if no constraints
@@ -368,7 +355,6 @@ void mj_mulJacTVec(const mjModel* m, const mjData* d, mjtNum* res, const mjtNum*
     mju_mulMatTVec(res, d->efc_J, vec, d->nefc, m->nv);
   }
 }
-
 
 
 //--------------------- instantiate constraints by type --------------------------------------------
@@ -649,7 +635,6 @@ void mj_instantiateEquality(const mjModel* m, mjData* d) {
 }
 
 
-
 // frictional dofs and tendons
 void mj_instantiateFriction(const mjModel* m, mjData* d) {
   int nv = m->nv, issparse = mj_isSparse(m);
@@ -703,7 +688,6 @@ void mj_instantiateFriction(const mjModel* m, mjData* d) {
 
   mj_freeStack(d);
 }
-
 
 
 // joint and tendon limits
@@ -843,7 +827,6 @@ void mj_instantiateLimit(const mjModel* m, mjData* d) {
 
   mj_freeStack(d);
 }
-
 
 
 // compute Jacobian for contact, return number of DOFs affected
@@ -1027,7 +1010,6 @@ void mj_instantiateContact(const mjModel* m, mjData* d) {
 }
 
 
-
 //------------------------ compute constraint parameters -------------------------------------------
 
 // compute diagApprox
@@ -1207,7 +1189,6 @@ void mj_diagApprox(const mjModel* m, mjData* d) {
 }
 
 
-
 // get solref, solimp for specified constraint
 static void getsolparam(const mjModel* m, const mjData* d, int i,
                         mjtNum* solref, mjtNum* solreffriction, mjtNum* solimp) {
@@ -1283,7 +1264,6 @@ static void getsolparam(const mjModel* m, const mjData* d, int i,
 }
 
 
-
 // get pos and dim for specified constraint
 static void getposdim(const mjModel* m, const mjData* d, int i, mjtNum* pos, int* dim) {
   // get id of constraint-related object
@@ -1319,7 +1299,6 @@ static void getposdim(const mjModel* m, const mjData* d, int i, mjtNum* pos, int
 }
 
 
-
 // return a to the power of b, quick return for powers 1 and 2
 // solimp[4] == 2 is the default, so these branches are common
 static mjtNum power(mjtNum a, mjtNum b) {
@@ -1330,7 +1309,6 @@ static mjtNum power(mjtNum a, mjtNum b) {
   }
   return mju_pow(a, b);
 }
-
 
 
 // compute impedance and derivative for one constraint
@@ -1383,7 +1361,6 @@ static void getimpedance(const mjtNum* solimp, mjtNum pos, mjtNum margin,
   *imp = solimp[0] + y*(solimp[1]-solimp[0]);
   *impP = yP * sgn * (solimp[1]-solimp[0]) / solimp[2];
 }
-
 
 
 // compute efc_R, efc_D, efc_KBIP, adjust efc_diagApprox
@@ -1504,7 +1481,6 @@ void mj_makeImpedance(const mjModel* m, mjData* d) {
 }
 
 
-
 //------------------------------------- constraint counting ----------------------------------------
 
 // count the non-zero columns in the Jacobian difference of two bodies
@@ -1523,7 +1499,6 @@ static int mj_jacDifPairCount(const mjModel* m, int* chain,
 
   return m->nv;
 }
-
 
 
 // count the non-zero columns of the Jacobian returned by mj_jacSum
@@ -1558,7 +1533,6 @@ static int mj_jacSumCount(const mjModel* m, mjData* d, int* chain,
 }
 
 
-
 // return number of constraint non-zeros, handle dense and dof-less cases
 static inline int mj_addConstraintCount(const mjModel* m, int size, int NV) {
   // over count for dense allocation
@@ -1567,7 +1541,6 @@ static inline int mj_addConstraintCount(const mjModel* m, int size, int NV) {
   }
   return mjMAX(0, NV) ? size : 0;
 }
-
 
 
 // count equality constraints, count Jacobian nonzeros if nnz is not NULL
@@ -1707,7 +1680,6 @@ static int mj_ne(const mjModel* m, mjData* d, int* nnz) {
 }
 
 
-
 // count frictional constraints, count Jacobian nonzeros if nnz is not NULL
 static int mj_nf(const mjModel* m, const mjData* d, int *nnz) {
   int nf = 0;
@@ -1733,7 +1705,6 @@ static int mj_nf(const mjModel* m, const mjData* d, int *nnz) {
 
   return nf;
 }
-
 
 
 // count limit constraints, count Jacobian nonzeros if nnz is not NULL
@@ -1800,7 +1771,6 @@ static int mj_nl(const mjModel* m, const mjData* d, int *nnz) {
 
   return nl;
 }
-
 
 
 // count contact constraints, count Jacobian nonzeros if nnz is not NULL
@@ -1899,7 +1869,6 @@ static int mj_nc(const mjModel* m, mjData* d, int* nnz) {
   mj_freeStack(d);
   return nc;
 }
-
 
 
 //---------------------------- top-level API for constraint construction ---------------------------
@@ -2003,7 +1972,6 @@ void mj_makeConstraint(const mjModel* m, mjData* d) {
   // compute KBIP, D, R, adjust diagApprox
   mj_makeImpedance(m, d);
 }
-
 
 
 // compute efc_AR
@@ -2243,7 +2211,6 @@ void mj_projectConstraint(const mjModel* m, mjData* d) {
 }
 
 
-
 // compute efc_vel, efc_aref
 void mj_referenceConstraint(const mjModel* m, mjData* d) {
   int nefc = d->nefc;
@@ -2258,7 +2225,6 @@ void mj_referenceConstraint(const mjModel* m, mjData* d) {
                      -KBIP[4*i]*KBIP[4*i+2]*(d->efc_pos[i]-d->efc_margin[i]);
   }
 }
-
 
 
 //---------------------------- update constraint state ---------------------------------------------
@@ -2459,7 +2425,6 @@ void mj_constraintUpdate_impl(int ne, int nf, int nefc,
     *cost = s;
   }
 }
-
 
 
 // compute efc_state, efc_force, qfrc_constraint

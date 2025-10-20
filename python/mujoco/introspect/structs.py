@@ -124,11 +124,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='timestep',
              ),
              StructFieldDecl(
-                 name='apirate',
-                 type=ValueType(name='mjtNum'),
-                 doc='update rate for remote API (Hz)',
-             ),
-             StructFieldDecl(
                  name='impratio',
                  type=ValueType(name='mjtNum'),
                  doc='ratio of friction-to-normal contact impedance',
@@ -5008,12 +5003,12 @@ STRUCTS: Mapping[str, StructDecl] = dict([
              StructFieldDecl(
                  name='pstack',
                  type=ValueType(name='size_t'),
-                 doc='first available byte in stack',
+                 doc='first available byte in stack (mutable)',
              ),
              StructFieldDecl(
                  name='pbase',
                  type=ValueType(name='size_t'),
-                 doc='value of pstack when mj_markStack was last called',
+                 doc='value of pstack when mj_markStack was last called (mutable)',  # pylint: disable=line-too-long
              ),
              StructFieldDecl(
                  name='parena',
@@ -5023,7 +5018,7 @@ STRUCTS: Mapping[str, StructDecl] = dict([
              StructFieldDecl(
                  name='maxuse_stack',
                  type=ValueType(name='mjtSize'),
-                 doc='maximum stack allocation in bytes',
+                 doc='maximum stack allocation in bytes (mutable)',
              ),
              StructFieldDecl(
                  name='maxuse_threadstack',
@@ -5086,7 +5081,7 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjWarningStat'),
                      extents=(8,),
                  ),
-                 doc='warning statistics',
+                 doc='warning statistics (mutable)',
              ),
              StructFieldDecl(
                  name='timer',
@@ -7138,6 +7133,11 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      extents=(3,),
                  ),
                  doc='frame color',
+             ),
+             StructFieldDecl(
+                 name='status',
+                 type=ValueType(name='int'),
+                 doc='status; 0: ok, 1: geoms exhausted',
              ),
          ),
      )),
@@ -9372,6 +9372,13 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                      inner_type=ValueType(name='mjIntVec'),
                  ),
                  doc='user vertex indices',
+             ),
+             StructFieldDecl(
+                 name='userfacenormal',
+                 type=PointerType(
+                     inner_type=ValueType(name='mjIntVec'),
+                 ),
+                 doc='user face normal indices',
              ),
              StructFieldDecl(
                  name='userfacetexcoord',

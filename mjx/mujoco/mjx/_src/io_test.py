@@ -173,7 +173,7 @@ class ModelIOTest(parameterized.TestCase):
       self.assertFalse(hasattr(mx, 'bvh_aabb'))
     elif impl == 'c':
       # Options specific to C are populated.
-      self.assertEqual(mx.opt._impl.apirate, m.opt.apirate)
+      self.assertEqual(mx.opt._impl.noslip_iterations, m.opt.noslip_iterations)
       # Fields private to C backend impl are populated.
       self.assertTrue(hasattr(mx._impl, 'bvh_aabb'))
     elif impl == 'warp':
@@ -786,35 +786,8 @@ class DataIOTest(parameterized.TestCase):
     self.assertEqual(dx[0].qpos.shape, (m.nq,))
 
     if impl == 'warp':
-      self.assertEqual(dx._impl.contact__dist.shape, (dx._impl.nconmax,))
-      self.assertEqual(dx[0]._impl.contact__dist.shape, (dx._impl.nconmax,))
-
-
-class FullCompatTest(parameterized.TestCase):
-  """Tests for the _full_compat flag."""
-
-  def test_full_compat_deprecated(self):
-    """Tests that _full_compat is deprecated."""
-    xml = """
-      <mujoco>
-        <worldbody>
-          <body name="box">
-            <joint name="slide1" type="slide" axis="1 0 0" />
-            <geom type="box" size=".05 .05 .05" mass="1"/>
-          </body>
-        </worldbody>
-        <actuator>
-          <motor joint="slide1"/>
-        </actuator>
-      </mujoco>
-    """
-    m = mujoco.MjModel.from_xml_string(xml)
-    with self.assertWarns(DeprecationWarning):
-      out = mjx_io.put_model(m, _full_compat=True)
-      self.assertEqual(out.impl, Impl.C)
-    with self.assertWarns(DeprecationWarning):
-      out = mjx_io.make_data(m, _full_compat=True)
-      self.assertEqual(out.impl, Impl.C)
+      self.assertEqual(dx._impl.contact__dist.shape, (dx._impl.naconmax,))
+      self.assertEqual(dx[0]._impl.contact__dist.shape, (dx._impl.naconmax,))
 
 
 # Test cases for `_resolve_impl_and_device` where the device is

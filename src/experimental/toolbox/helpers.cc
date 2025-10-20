@@ -24,8 +24,8 @@
 #include <string>
 #include <vector>
 
-#include "third_party/libwebp/src/webp/encode.h"
-#include "third_party/libwebp/src/webp/types.h"
+#include "webp/encode.h"
+#include "webp/types.h"
 #include <mujoco/mjrender.h>
 #include <mujoco/mjxmacro.h>
 #include <mujoco/mujoco.h>
@@ -43,20 +43,24 @@ mjModel* LoadMujocoModel(const std::string& model_file, const mjVFS* vfs) {
   } else if (model_file.ends_with(".mjb")) {
     model = mj_loadModel(model_file.c_str(), 0);
     if (!model) {
-      mju_error("Could not load binary model");
+      mju_error("LoadMujocoModel mj_loadModel could not load file '%s'",
+                model_file.c_str());
     }
   } else if (model_file.ends_with(".xml")) {
     char error[1000] = "";
     model = mj_loadXML(model_file.c_str(), vfs, error, sizeof(error));
     if (!model) {
-      mju_error("Load model error: %s", error);
+      mju_error("LoadMujocoModel mj_loadXML failed with '%s' for file '%s'",
+                error, model_file.c_str());
     }
   } else {
     char error[1000] = "";
     auto spec =
         mj_parseXMLString(model_file.c_str(), nullptr, error, sizeof(error));
     if (!spec) {
-      mju_error("Load model error: %s", error);
+      mju_error(
+          "LoadMujocoModel mj_parseXMLString failed with '%s' for file '%s'",
+          error, model_file.c_str());
     }
     model = mj_compile(spec, 0);
     mj_deleteSpec(spec);

@@ -53,7 +53,6 @@ static const int MAX_ARRAY_SIZE = INT_MAX / 4;
 //----------------------------------- static utility functions -------------------------------------
 
 
-
 //----------------------------------- static utility functions -------------------------------------
 
 // id used to identify binary mjModel file/buffer
@@ -80,7 +79,6 @@ static int getnint(void) {
 }
 
 
-
 // count buffer members in mjModel (mjtSize)
 static int getnbuffer(void) {
   int cnt = 0;
@@ -93,7 +91,6 @@ static int getnbuffer(void) {
 }
 
 
-
 // count pointers in mjModel
 static int getnptr(void) {
   int cnt = 0;
@@ -104,7 +101,6 @@ static int getnptr(void) {
 
   return cnt;
 }
-
 
 
 // write to memory buffer
@@ -125,7 +121,6 @@ static void bufwrite(const void* src, int num, int szbuf, void* buf, int* ptrbuf
 }
 
 
-
 // read from memory buffer
 static void bufread(void* dest, int num, int szbuf, const void* buf, int* ptrbuf) {
   // check pointers
@@ -144,14 +139,12 @@ static void bufread(void* dest, int num, int szbuf, const void* buf, int* ptrbuf
 }
 
 
-
 // number of bytes to be skipped to achieve 64-byte alignment
 static inline unsigned int SKIP(intptr_t offset) {
   const unsigned int align = 64;
   // compute skipped bytes
   return (align - (offset % align)) % align;
 }
-
 
 
 //----------------------------------- mjModel construction -----------------------------------------
@@ -183,7 +176,6 @@ static void mj_setPtrModel(mjModel* m) {
 }
 
 
-
 // increases buffer size without causing integer overflow, returns 0 if
 // operation would cause overflow
 // performs the following operations:
@@ -213,12 +205,10 @@ static int safeAddToBufferSize(intptr_t* offset, mjtSize* nbuffer,
 }
 
 
-
 // free model memory without destroying the struct
 static void freeModelBuffers(mjModel* m) {
   mju_free(m->buffer);
 }
-
 
 
 // allocate and initialize mjModel structure
@@ -403,7 +393,6 @@ void mj_makeModel(mjModel** dest,
 }
 
 
-
 // copy mjModel, if dest==NULL create new model
 mjModel* mj_copyModel(mjModel* dest, const mjModel* src) {
   // allocate new model if needed
@@ -456,7 +445,6 @@ mjModel* mj_copyModel(mjModel* dest, const mjModel* src) {
 }
 
 
-
 // copy mjModel, skip large arrays not required for abstract visualization
 void mjv_copyModel(mjModel* dest, const mjModel* src) {
   // check sizes
@@ -486,7 +474,6 @@ void mjv_copyModel(mjModel* dest, const mjModel* src) {
   #undef XNV
   #define XNV X
 }
-
 
 
 // save model to binary file, or memory buffer of szbuf>0
@@ -680,7 +667,6 @@ void mj_deleteModel(mjModel* m) {
 }
 
 
-
 // size of buffer needed to hold model
 int mj_sizeModel(const mjModel* m) {
   int size = (
@@ -698,8 +684,6 @@ int mj_sizeModel(const mjModel* m) {
 
   return size;
 }
-
-
 
 
 //-------------------------- sparse system matrix construction -------------------------------------
@@ -878,7 +862,6 @@ void mj_makeBSparse(int nv, int nbody, int nB,
 }
 
 
-
 // check D and B sparsity for consistency
 static void checkDBSparse(const mjModel* m) {
   // process all dofs
@@ -897,7 +880,6 @@ static void checkDBSparse(const mjModel* m) {
     }
   }
 }
-
 
 
 // integer valued dst[D or C or M] = src[M (legacy)], handle different sparsity representations
@@ -1008,7 +990,6 @@ static void mj_setPtrData(const mjModel* m, mjData* d) {
 }
 
 
-
 // initialize plugins, copy into d (required for deletion)
 void mj_initPlugin(const mjModel* m, mjData* d) {
   d->nplugin = m->nplugin;
@@ -1023,7 +1004,6 @@ void mj_initPlugin(const mjModel* m, mjData* d) {
     }
   }
 }
-
 
 
 // free mjData memory without destroying the struct
@@ -1043,7 +1023,6 @@ static void freeDataBuffers(mjData* d) {
     mju_free(d->buffer);
     mju_free(d->arena);
 }
-
 
 
 // allocate and initialize raw mjData structure
@@ -1114,7 +1093,6 @@ void mj_makeRawData(mjData** dest, const mjModel* m) {
 }
 
 
-
 // allocate and initialize mjData structure
 mjData* mj_makeData(const mjModel* m) {
   mjData* d = NULL;
@@ -1125,7 +1103,6 @@ mjData* mj_makeData(const mjModel* m) {
   }
   return d;
 }
-
 
 
 // copy mjData, if dest==NULL create new data;
@@ -1275,7 +1252,6 @@ mjData* mjv_copyData(mjData* dest, const mjModel* m, const mjData* src) {
 }
 
 
-
 // clear data, set defaults
 static void _resetData(const mjModel* m, mjData* d, unsigned char debug_value) {
   //------------------------------ save plugin state and data
@@ -1358,11 +1334,11 @@ static void _resetData(const mjModel* m, mjData* d, unsigned char debug_value) {
 #endif
 
 #ifdef MEMORY_SANITIZER
-  // Tell msan to treat the entire buffer as uninitialized
+  // under MSAN, mark the entire buffer as uninitialized
   __msan_allocated_memory(d->buffer, d->nbuffer);
 #endif
 
-  // zero out arrays that are not affected by mj_forward
+  // zero out user-settable state and input arrays (MSAN: mark as initialized)
   mju_zero(d->qpos, m->nq);
   mju_zero(d->qvel, m->nv);
   mju_zero(d->act, m->na);
@@ -1370,11 +1346,10 @@ static void _resetData(const mjModel* m, mjData* d, unsigned char debug_value) {
   for (int i=0; i < m->neq; i++) d->eq_active[i] = m->eq_active0[i];
   mju_zero(d->qfrc_applied, m->nv);
   mju_zero(d->xfrc_applied, 6*m->nbody);
-  mju_zero(d->qacc, m->nv);
+  mju_zero(d->qacc, m->nv);  // input to inverse dynamics
   mju_zero(d->qacc_warmstart, m->nv);
   mju_zero(d->act_dot, m->na);
   mju_zero(d->userdata, m->nuserdata);
-  mju_zero(d->sensordata, m->nsensordata);
   mju_zero(d->mocap_pos, 3*m->nmocap);
   mju_zero(d->mocap_quat, 4*m->nmocap);
 
@@ -1383,7 +1358,7 @@ static void _resetData(const mjModel* m, mjData* d, unsigned char debug_value) {
 
   // copy qpos0 from model
   if (m->qpos0) {
-    memcpy(d->qpos, m->qpos0, m->nq*sizeof(mjtNum));
+    mju_copy(d->qpos, m->qpos0, m->nq);
   }
 
   // set mocap_pos/quat = body_pos/quat for mocap bodies
@@ -1428,19 +1403,16 @@ static void _resetData(const mjModel* m, mjData* d, unsigned char debug_value) {
 }
 
 
-
 // clear data, set data->qpos = model->qpos0
 void mj_resetData(const mjModel* m, mjData* d) {
   _resetData(m, d, 0);
 }
 
 
-
 // clear data, set data->qpos = model->qpos0, fill with debug_value
 void mj_resetDataDebug(const mjModel* m, mjData* d, unsigned char debug_value) {
   _resetData(m, d, debug_value);
 }
-
 
 
 // Reset data. If 0 <= key < nkey, set fields from specified keyframe.
@@ -1460,7 +1432,6 @@ void mj_resetDataKeyframe(const mjModel* m, mjData* d, int key) {
 }
 
 
-
 // de-allocate mjData
 void mj_deleteData(mjData* d) {
   if (d) {
@@ -1468,7 +1439,6 @@ void mj_deleteData(mjData* d) {
     mju_free(d);
   }
 }
-
 
 
 // number of position and velocity coordinates for each joint type
@@ -1546,7 +1516,6 @@ static int sensorSize(mjtSensor sensor_type, int sensor_dim) {
 }
 
 
-
 // returns the number of objects of the given type
 //   -1: mjOBJ_UNKNOWN
 //   -2: invalid objtype
@@ -1611,7 +1580,6 @@ static int numObjects(const mjModel* m, mjtObj objtype) {
   }
   return -2;
 }
-
 
 
 // validate reference fields in a model; return null if valid, error message otherwise
