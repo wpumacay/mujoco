@@ -56,15 +56,19 @@ namespace mujoco::studio {
 // - "passive" mode
 // - async physics
 
-static constexpr toolbox::Window::Config kWindowConfig =
+static constexpr toolbox::Window::Config kWindowConfig = {
 #if defined(USE_FILAMENT_VULKAN)
-  toolbox::Window::Config::kFilamentVulkan;
+  .render_config = toolbox::Window::RenderConfig::kFilamentVulkan,
 #elif defined(USE_FILAMENT_OPENGL)
-  toolbox::Window::Config::kFilamentOpenGL;
+  .render_config = toolbox::Window::RenderConfig::kFilamentOpenGL,
 #elif defined(USE_CLASSIC_OPENGL)
-  toolbox::Window::Config::kClassicOpenGL;
+  .render_config = toolbox::Window::RenderConfig::kClassicOpenGL,
 #endif
+  .enable_keyboard = true,
+};
 
+
+static void ToggleFlag(mjtByte& flag) { flag = flag ? 0 : 1; }
 
 static void ToggleWindow(bool& window) {
   window = !window;
@@ -72,6 +76,17 @@ static void ToggleWindow(bool& window) {
 }
 
 static void ShowPopup(bool& popup) { popup = true; }
+
+static void SelectParentPerturb(const mjModel* model, mjvPerturb& perturb) {
+  if (perturb.select > 0) {
+    perturb.select = model->body_parentid[perturb.select];
+    perturb.flexselect = -1;
+    perturb.skinselect = -1;
+    if (perturb.select <= 0) {
+      perturb.active = 0;
+    }
+  }
+}
 
 // FontAwesome icon codes.
 static constexpr const char* ICON_PLAY = "\xef\x81\x8b";
@@ -213,9 +228,94 @@ void App::Render() {
 }
 
 void App::HandleMouseEvents() {
-  ::mujoco::toolbox::HandleMouseEvents(window_.get(), renderer_.get(),
-                                       physics_.get(), perturb_, vis_options_,
-                                       camera_, ui_.camera_idx);
+  auto& io = ImGui::GetIO();
+  if (io.WantCaptureMouse) {
+    return;
+  }
+
+  mjModel* model = physics_->GetModel();
+  mjData* data = physics_->GetData();
+  mjvScene& scene = renderer_->GetScene();
+
+  // Normalize mouse positions and movement to display size.
+  const float mouse_x = io.MousePos.x / io.DisplaySize.x;
+  const float mouse_y = io.MousePos.y / io.DisplaySize.y;
+  const float mouse_dx = io.MouseDelta.x / io.DisplaySize.x;
+  const float mouse_dy = io.MouseDelta.y / io.DisplaySize.y;
+  const float mouse_scroll = io.MouseWheel / 50.0f;
+
+  // Determine the mouse action based on which buttons are down.
+  mjtMouse action = mjMOUSE_NONE;
+  if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+    action = io.KeyShift ? mjMOUSE_ROTATE_H : mjMOUSE_ROTATE_V;
+  } else if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+    action = io.KeyShift ? mjMOUSE_MOVE_H : mjMOUSE_MOVE_V;
+  } else if (ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
+    action = mjMOUSE_ZOOM;
+  } else {
+    // If no mouse buttons are down, end any active perturbations.
+    perturb_.active = 0;
+  }
+
+  // Mouse scroll.
+  if (model && mouse_scroll != 0.0f) {
+    mjv_moveCamera(model, mjMOUSE_ZOOM, 0, mouse_scroll, &scene, &camera_);
+  }
+
+  // Mouse drag.
+  if (model && data && action != mjMOUSE_NONE &&
+      (mouse_dx != 0.0f || mouse_dy != 0.0f)) {
+    // If ctrl is pressed, move the perturbation, otherwise move the camera_.
+    if (io.KeyCtrl) {
+      if (perturb_.select > 0) {
+        const int active =
+            action == mjMOUSE_MOVE_V ? mjPERT_TRANSLATE : mjPERT_ROTATE;
+        if (active != perturb_.active) {
+          mjv_initPerturb(model, data, &scene, &perturb_);
+          perturb_.active = active;
+        }
+        mjv_movePerturb(model, data, action, mouse_dx, mouse_dy, &scene,
+                        &perturb_);
+      }
+    } else {
+      mjv_moveCamera(model, action, mouse_dx, mouse_dy, &scene, &camera_);
+    }
+  }
+
+  // Left double click.
+  if (data && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+    toolbox::PickResult picked = toolbox::Pick(
+        model, data, &camera_, mouse_x, mouse_y, window_->GetAspectRatio(),
+        &renderer_->GetScene(), &vis_options_);
+    if (picked.body >= 0) {
+      perturb_.select = picked.body;
+      perturb_.flexselect = picked.flex;
+      perturb_.skinselect = picked.skin;
+
+      // Compute the local position of the selected object in the world.
+      mjtNum tmp[3];
+      mju_sub3(tmp, picked.point, data->xpos + 3 * picked.body);
+      mju_mulMatTVec(perturb_.localpos, data->xmat + 9 * picked.body, tmp, 3, 3);
+    } else {
+      perturb_.select = 0;
+      perturb_.flexselect = -1;
+      perturb_.skinselect = -1;
+    }
+  }
+
+  // Right double click.
+  if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Right)) {
+    toolbox::PickResult picked = toolbox::Pick(
+        model, data, &camera_, mouse_x, mouse_y, window_->GetAspectRatio(),
+        &renderer_->GetScene(), &vis_options_);
+    mju_copy3(camera_.lookat, picked.point);
+    if (picked.body > 0 && io.KeyCtrl) {
+      camera_.type = mjCAMERA_TRACKING;
+      camera_.trackbodyid = picked.body;
+      camera_.fixedcamid = -1;
+      ui_.camera_idx = 1;
+    }
+  }
 }
 
 void App::ChangeSpeed(int delta) {
@@ -244,6 +344,8 @@ void App::HandleKeyboardEvents() {
   if (ImGui::GetIO().WantCaptureKeyboard) {
     return;
   }
+
+  mjModel* model = physics_->GetModel();
 
   constexpr auto ImGuiMode_CtrlShift = ImGuiMod_Ctrl | ImGuiMod_Shift;
 
@@ -345,9 +447,107 @@ void App::HandleKeyboardEvents() {
     }
   }
 
-  ::mujoco::toolbox::HandleKeyboardEvents(
-      window_.get(), renderer_.get(), physics_.get(), perturb_, vis_options_,
-      camera_, ui_.camera_idx);
+  // Physics control shortcuts.
+  if (ImGui_IsChordJustPressed(ImGuiKey_Space)) {
+    physics_->TogglePause();
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_Backspace)) {
+    physics_->Reset();
+  }
+
+  // Camera shortcuts.
+  if (model) {
+    if (ImGui_IsChordJustPressed(ImGuiKey_Escape)) {
+      ui_.camera_idx = toolbox::SetCamera(model, &camera_, 0);
+    } else if (ImGui_IsChordJustPressed(ImGuiKey_LeftBracket)) {
+      ui_.camera_idx = toolbox::SetCamera(model, &camera_,ui_.camera_idx - 1);
+    } else if (ImGui_IsChordJustPressed(ImGuiKey_RightBracket)) {
+      ui_.camera_idx = toolbox::SetCamera(model, &camera_, ui_.camera_idx + 1);
+    }
+  }
+
+  // Perturb shortcuts.
+  if (ImGui_IsChordJustPressed(ImGuiKey_PageUp)) {
+    SelectParentPerturb(model, perturb_);
+  }
+
+  // Visualization shortcuts.
+  if (ImGui_IsChordJustPressed(ImGuiKey_F6)) {
+    vis_options_.frame = (vis_options_.frame + 1) % mjNFRAME;
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_F7)) {
+    vis_options_.label = (vis_options_.label + 1) % mjNLABEL;
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_Comma)) {
+    ToggleFlag(vis_options_.flags[mjVIS_ACTIVATION]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_Backslash)) {
+    ToggleFlag(vis_options_.flags[mjVIS_MESHBVH]);
+    // } else if (ImGui_IsChordJustPressed(ImGuiKey_Backquote)) {
+    //   ToggleFlag(vis_options_.flags[mjVIS_BODYBVH]);
+    // } else if (ImGui_IsChordJustPressed(ImGuiKey_Quote)) {
+    //   ToggleFlag(vis_options_.flags[mjVIS_SCLINERTIA]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_Semicolon)) {
+    ToggleFlag(vis_options_.flags[mjVIS_SKIN]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_U)) {
+    ToggleFlag(vis_options_.flags[mjVIS_ACTUATOR]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_Q)) {
+    ToggleFlag(vis_options_.flags[mjVIS_CAMERA]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_M)) {
+    ToggleFlag(vis_options_.flags[mjVIS_COM]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_F)) {
+    ToggleFlag(vis_options_.flags[mjVIS_CONTACTFORCE]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_C)) {
+    ToggleFlag(vis_options_.flags[mjVIS_CONTACTPOINT]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_P)) {
+    ToggleFlag(vis_options_.flags[mjVIS_CONTACTSPLIT]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_H)) {
+    ToggleFlag(vis_options_.flags[mjVIS_CONVEXHULL]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_E)) {
+    ToggleFlag(vis_options_.flags[mjVIS_CONSTRAINT]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_I)) {
+    ToggleFlag(vis_options_.flags[mjVIS_ISLAND]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_J)) {
+    ToggleFlag(vis_options_.flags[mjVIS_JOINT]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_Z)) {
+    ToggleFlag(vis_options_.flags[mjVIS_LIGHT]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_B)) {
+    ToggleFlag(vis_options_.flags[mjVIS_PERTFORCE]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_O)) {
+    ToggleFlag(vis_options_.flags[mjVIS_PERTOBJ]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_Y)) {
+    ToggleFlag(vis_options_.flags[mjVIS_RANGEFINDER]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_V)) {
+    ToggleFlag(vis_options_.flags[mjVIS_TENDON]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_X)) {
+    ToggleFlag(vis_options_.flags[mjVIS_TEXTURE]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_T)) {
+    ToggleFlag(vis_options_.flags[mjVIS_TRANSPARENT]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_K)) {
+    ToggleFlag(vis_options_.flags[mjVIS_AUTOCONNECT]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_G)) {
+    ToggleFlag(vis_options_.flags[mjVIS_STATIC]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_0 | ImGuiMod_Shift)) {
+    ToggleFlag(vis_options_.sitegroup[0]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_1 | ImGuiMod_Shift)) {
+    ToggleFlag(vis_options_.sitegroup[1]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_2 | ImGuiMod_Shift)) {
+    ToggleFlag(vis_options_.sitegroup[2]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_3 | ImGuiMod_Shift)) {
+    ToggleFlag(vis_options_.sitegroup[3]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_4 | ImGuiMod_Shift)) {
+    ToggleFlag(vis_options_.sitegroup[4]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_5 | ImGuiMod_Shift)) {
+    ToggleFlag(vis_options_.sitegroup[5]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_0)) {
+    ToggleFlag(vis_options_.geomgroup[0]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_1)) {
+    ToggleFlag(vis_options_.geomgroup[1]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_2)) {
+    ToggleFlag(vis_options_.geomgroup[2]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_3)) {
+    ToggleFlag(vis_options_.geomgroup[3]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_4)) {
+    ToggleFlag(vis_options_.geomgroup[4]);
+  } else if (ImGui_IsChordJustPressed(ImGuiKey_5)) {
+    ToggleFlag(vis_options_.geomgroup[5]);
+  }
 }
 
 void App::LoadSettings() {
@@ -370,7 +570,7 @@ void App::SaveSettings() {
 
 void App::SetCamera(int idx) {
   if (Model()) {
-    ui_.camera_idx = ::mujoco::toolbox::SetCamera(*Model(), camera_, idx);
+    ui_.camera_idx = ::mujoco::toolbox::SetCamera(Model(), &camera_, idx);
   }
 }
 
@@ -1676,8 +1876,6 @@ void App::VisualizationGui() {
 }
 
 void App::RenderingGui() {
-  mjvScene& scene = renderer_->GetScene();
-
   // Generate a list of camera names dynamically.
   std::vector<const char*> camera_names;
   camera_names.push_back("Free");
@@ -1699,7 +1897,7 @@ void App::RenderingGui() {
     SetCamera(ui_.camera_idx);
   }
   if (ImGui::Button("Copy Camera")) {
-    std::string camera_string = toolbox::CameraToString(&scene);
+    std::string camera_string = toolbox::CameraToString(Data(), &camera_);
     toolbox::MaybeSaveToClipboard(camera_string);
   }
 
@@ -1723,7 +1921,10 @@ void App::RenderingGui() {
     ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing() / 2);
 
     for (int i = 0; i < mjNRNDFLAG; ++i) {
-      Toggle(mjRNDSTRING[i][0], scene.flags[i]);
+      mjtByte flag = renderer_->GetFlag(static_cast<mjtRndFlag>(i));
+      Toggle(mjRNDSTRING[i][0], flag);
+      renderer_->SetFlag(static_cast<mjtRndFlag>(i), flag);
+
       if (i % 2 == 0 && i != mjNRNDFLAG - 1) {
         ImGui::SameLine();
       }
