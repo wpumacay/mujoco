@@ -20,6 +20,7 @@ build_filament=OFF
 build_with_vulkan=OFF
 build_studio=OFF
 build_avx=ON
+build_simulate=ON
 njobs=4
 
 while [[ $# -gt 0 ]]; do
@@ -37,6 +38,7 @@ done
 if [[ "${build_filament}" == "ON" ]]; then
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
+    build_simulate=OFF
 fi
 
 echo "Configuring ..."
@@ -45,7 +47,7 @@ CMAKE_CONFIG_ARGS=(
     "-DUSE_STATIC_LIBCXX=OFF"
     "-DBUILD_SHARED_LIBS=OFF"
     "-DMUJOCO_BUILD_EXAMPLES=OFF"
-    "-DMUJOCO_BUILD_SIMULATE=ON"
+    "-DMUJOCO_BUILD_SIMULATE=${build_simulate}"
     "-DMUJOCO_BUILD_TESTS=OFF"
     "-DMUJOCO_WITH_USD=OFF"
     "-DMUJOCO_USE_FILAMENT=${build_filament}"
