@@ -213,6 +213,7 @@ class BuildCMakeExtension(build_ext.build_ext):
               os.path.join(directory, filename), os.path.join(dst, filename)
           )
 
+  # TODO(wilbert): check that we're not copying twice, it seems there's two copies
   def _copy_filament_assets(self):
     """Copy Filament assets to the package installation directory."""
     # Assets are in build/bin/assets/ and build/src/experimental/filament/assets/
