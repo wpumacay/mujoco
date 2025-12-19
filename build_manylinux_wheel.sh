@@ -5,7 +5,7 @@ set -e
 build_type="Release"
 
 echo "Going back to the root of the project"
-ROOT_DIR="$(git rev-parse --show-toplevel)"
+ROOT_DIR="$(pwd)"
 
 cd ${ROOT_DIR}
 
