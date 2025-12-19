@@ -52,11 +52,12 @@ CMAKE_CONFIG_ARGS=(
     "-DMUJOCO_USE_FILAMENT=${build_filament}"
     "-DMUJOCO_USE_FILAMENT_VULKAN=OFF"
     "-DFILAMENT_SUPPORTS_VULKAN=OFF"
+    "-DFILAMENT_SUPPORTS_METAL=OFF"
     "-DMUJOCO_BUILD_STUDIO=${build_studio}"
     "-DCMAKE_INSTALL_PREFIX=install"
     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
     "-DMUJOCO_ENABLE_AVX_INTRINSICS=${build_avx}"
-    "-DCMAKE_INSTALL_LIBDIR=lib"
+    # "-DCMAKE_INSTALL_LIBDIR=lib"
 )
 
 if [[ -n "${CMAKE_ARGS}" ]]; then
@@ -108,4 +109,4 @@ if [[ "${build_filament}" == "ON" ]]; then
     MUJOCO_FILAMENT_ASSETS="${ROOT_DIR}/install/filament/assets"
 fi
 
-MUJOCO_CMAKE_ARGS="${MUJOCO_CMAKE_ARGS}" MUJOCO_FILAMENT_ASSETS="${MUJOCO_FILAMENT_ASSETS}" uv build --wheel --force-pep517 ${ROOT_DIR}/python/dist/mujoco-*.tar.gz --wheel-dir ${ROOT_DIR}/python/dist
+MUJOCO_CMAKE_ARGS="${MUJOCO_CMAKE_ARGS}" MUJOCO_FILAMENT_ASSETS="${MUJOCO_FILAMENT_ASSETS}" uv build --wheel --force-pep517 ${ROOT_DIR}/python/dist/mujoco-*.tar.gz --out-dir ${ROOT_DIR}/python/dist
