@@ -54,6 +54,7 @@ CMAKE_CONFIG_ARGS=(
     "-DCMAKE_INSTALL_PREFIX=install"
     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
     "-DMUJOCO_ENABLE_AVX_INTRINSICS=${build_avx}"
+    "-DCMAKE_INSTALL_LIBDIR=lib"
 )
 
 if [[ -n "${CMAKE_ARGS}" ]]; then
@@ -74,10 +75,10 @@ cmake --install build
 echo "Copy plugins to install directory"
 
 mkdir -p install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib64/libactuator.* ${ROOT_DIR}/install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib64/libelasticity.* ${ROOT_DIR}/install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib64/libsensor.* ${ROOT_DIR}/install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib64/libsdf_plugin.* ${ROOT_DIR}/install/mujoco_plugin
+cp ${ROOT_DIR}/build/lib/libactuator.* ${ROOT_DIR}/install/mujoco_plugin
+cp ${ROOT_DIR}/build/lib/libelasticity.* ${ROOT_DIR}/install/mujoco_plugin
+cp ${ROOT_DIR}/build/lib/libsensor.* ${ROOT_DIR}/install/mujoco_plugin
+cp ${ROOT_DIR}/build/lib/libsdf_plugin.* ${ROOT_DIR}/install/mujoco_plugin
 
 echo "Make source distribution"
 
