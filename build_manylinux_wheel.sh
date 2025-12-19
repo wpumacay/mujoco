@@ -82,6 +82,13 @@ cp ${ROOT_DIR}/build/lib/libelasticity.* ${ROOT_DIR}/install/mujoco_plugin
 cp ${ROOT_DIR}/build/lib/libsensor.* ${ROOT_DIR}/install/mujoco_plugin
 cp ${ROOT_DIR}/build/lib/libsdf_plugin.* ${ROOT_DIR}/install/mujoco_plugin
 
+if [[ "${build_filament}" == "ON" ]]; then
+    echo "Copy filament assets to install directory"
+    mkdir -p install/filament/assets
+    cp ${ROOT_DIR}/build/bin/assets/*.filamat ${ROOT_DIR}/install/filament/assets
+    cp ${ROOT_DIR}/build/bin/assets/*.ktx ${ROOT_DIR}/install/filament/assets
+fi
+
 echo "Make source distribution"
 
 bash ${ROOT_DIR}/python/make_sdist_manylinux.sh
@@ -92,10 +99,15 @@ export MUJOCO_PATH="${ROOT_DIR}/install"
 export MUJOCO_PLUGIN_PATH="${ROOT_DIR}/install/mujoco_plugin"
 
 MUJOCO_CMAKE_ARGS=""
-if [[ "${build_avx}" != ON ]]; then
+if [[ "${build_avx}" != "ON" ]]; then
     MUJOCO_CMAKE_ARGS="-DMUJOCO_ENABLE_AVX_INTRINSICS=OFF"
 fi
 
-MUJOCO_CMAKE_ARGS="${MUJOCO_CMAKE_ARGS}" ${py_bin} -m pip wheel --use-pep517 -vvv ${ROOT_DIR}/python/dist/mujoco-*.tar.gz --wheel-dir ${ROOT_DIR}/python/dist
+MUJOCO_FILAMENT_ASSETS=""
+if [[ "${build_filament}" == "ON" ]]; then
+    MUJOCO_FILAMENT_ASSETS="${ROOT_DIR}/install/filament/assets"
+fi
+
+MUJOCO_CMAKE_ARGS="${MUJOCO_CMAKE_ARGS}" MUJOCO_FILAMENT_ASSETS="${MUJOCO_FILAMENT_ASSETS}" ${py_bin} -m pip wheel --use-pep517 -vvv ${ROOT_DIR}/python/dist/mujoco-*.tar.gz --wheel-dir ${ROOT_DIR}/python/dist
 
 auditwheel repair --wheel-dir ${ROOT_DIR}/python/dist ${ROOT_DIR}/python/dist/mujoco-*.whl
