@@ -7,6 +7,7 @@ RUN :\
         libXcursor-devel libxkbcommon-x11-devel \
         libXrandr-devel libXi-devel \
         clang llvm neovim \
+        SDL2-devel \
         vulkan vulkan-tools vulkan-headers vulkan-loader-devel \
     && :
 
