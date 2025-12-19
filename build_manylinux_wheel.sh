@@ -15,6 +15,30 @@ if [ ! -d "${ROOT_DIR}/install" ]; then
     mkdir install
 fi
 
+SHOW_HELP=false
+build_filament=OFF
+build_with_vulkan=OFF
+build_studio=OFF
+build_avx=ON
+njobs=4
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help) SHOW_HELP=true; shift ;;
+        --filament) build_filament=ON; shift ;;
+        --vulkan) build_with_vulkan=ON; shift ;;
+        --studio) build_studio=ON; shift ;;
+        --no-simd) build_avx=OFF; shift ;;
+        --njobs) njobs="$2"; shift 2 ;;
+        *) echo "Unkown option: $1"; exit 1 ;;
+    esac
+done
+
+if [[ "${build_filament}" == "ON" ]]; then
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+fi
+
 echo "Configuring ..."
 CMAKE_CONFIG_ARGS=(
     "-DCMAKE_BUILD_TYPE=${build_type}"
@@ -24,10 +48,12 @@ CMAKE_CONFIG_ARGS=(
     "-DMUJOCO_BUILD_SIMULATE=ON"
     "-DMUJOCO_BUILD_TESTS=OFF"
     "-DMUJOCO_WITH_USD=OFF"
-    "-DMUJOCO_USE_FILAMENT=OFF"
-    "-DMUJOCO_BUILD_STUDIO=OFF"
+    "-DMUJOCO_USE_FILAMENT=${build_filament}"
+    "-DMUJOCO_USE_FILAMENT_VULKAN=${build_with_vulkan}"
+    "-DMUJOCO_BUILD_STUDIO=${build_studio}"
     "-DCMAKE_INSTALL_PREFIX=install"
     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
+    "-DMUJOCO_ENABLE_AVX_INTRINSICS=${build_avx}"
 )
 
 if [[ -n "${CMAKE_ARGS}" ]]; then
@@ -39,7 +65,7 @@ cmake -B build "${CMAKE_CONFIG_ARGS[@]}"
 
 echo "Building ..."
 
-cmake --build build --config="${build_type}"
+cmake --build build --config="${build_type}" --parallel ${njobs}
 
 echo "Installing to target dir ..."
 
@@ -62,6 +88,11 @@ echo "Build python wheel"
 export MUJOCO_PATH="${ROOT_DIR}/install"
 export MUJOCO_PLUGIN_PATH="${ROOT_DIR}/install/mujoco_plugin"
 
-${py_bin} -m pip wheel --use-pep517 -vvv ${ROOT_DIR}/python/dist/mujoco-*.tar.gz --wheel-dir ${ROOT_DIR}/python/dist
+MUJOCO_CMAKE_ARGS=""
+if [[ "${build_avx}" != ON ]]; then
+    MUJOCO_CMAKE_ARGS="-DMUJOCO_ENABLE_AVX_INTRINSICS=OFF"
+fi
+
+MUJOCO_CMAKE_ARGS="${MUJOCO_CMAKE_ARGS}" ${py_bin} -m pip wheel --use-pep517 -vvv ${ROOT_DIR}/python/dist/mujoco-*.tar.gz --wheel-dir ${ROOT_DIR}/python/dist
 
 auditwheel repair --wheel-dir ${ROOT_DIR}/python/dist ${ROOT_DIR}/python/dist/mujoco-*.whl

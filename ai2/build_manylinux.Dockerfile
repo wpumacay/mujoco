@@ -6,7 +6,8 @@ RUN :\
         wayland-devel mesa-libGL-devel libXinerama-devel \
         libXcursor-devel libxkbcommon-x11-devel \
         libXrandr-devel libXi-devel \
-        clang llvm \
+        clang llvm neovim \
+        vulkan vulkan-tools vulkan-headers vulkan-loader-devel \
     && :
 
 COPY . /mujoco

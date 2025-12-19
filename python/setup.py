@@ -263,9 +263,7 @@ class BuildCMakeExtension(build_ext.build_ext):
         f'-DCMAKE_MODULE_PATH:PATH={cmake_module_path}',
         f'-DCMAKE_BUILD_TYPE:STRING={build_cfg}',
         f'-DCMAKE_LIBRARY_OUTPUT_DIRECTORY:PATH={self.build_temp}',
-        (
-            f'-DCMAKE_INTERPROCEDURAL_OPTIMIZATION:BOOL={"OFF" if self.debug else "ON"}'
-        ),
+        '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION:BOOL=OFF',
         '-DCMAKE_Fortran_COMPILER:STRING=',
         '-DBUILD_TESTING:BOOL=OFF',
         '-DMUJOCO_USE_DEFAULT_LD=ON'
