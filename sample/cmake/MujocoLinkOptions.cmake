@@ -34,7 +34,7 @@ function(get_mujoco_extra_link_options OUTPUT_VAR)
             -Wl,/OPT:ICF
         )
       endif()
-    else()
+    elseif(NOT MUJOCO_USE_DEFAULT_LD)
       set(CMAKE_REQUIRED_FLAGS "-fuse-ld=lld")
       check_c_source_compiles("int main() {}" SUPPORTS_LLD)
       if(SUPPORTS_LLD)

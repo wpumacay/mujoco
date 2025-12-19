@@ -48,6 +48,7 @@ if(NOT EMSCRIPTEN)
   option(MUJOCO_WITH_USD "Build with OpenUSD" OFF)
   option(MUJOCO_USE_FILAMENT "Use filament rendering" OFF)
   option(MUJOCO_USE_FILAMENT_VULKAN "Use vulkan backend for filament rendering" OFF)
+  option(MUJOCO_USE_DEFAULT_LD "Use ld for linking, seems ld.gold and others don't work well in some systems" ON)
 endif()
 
 if(EMSCRIPTEN)

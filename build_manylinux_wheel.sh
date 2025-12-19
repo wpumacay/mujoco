@@ -4,6 +4,8 @@ set -e
 
 build_type="Release"
 
+py_bin="/opt/python/cp310-cp310/bin/python"
+
 echo "Going back to the root of the project"
 ROOT_DIR="$(pwd)"
 
@@ -19,7 +21,7 @@ CMAKE_CONFIG_ARGS=(
     # "-DUSE_STATIC_LIBCXX=OFF"
     # "-DBUILD_SHARED_LIBS=OFF"
     "-DMUJOCO_BUILD_EXAMPLES=OFF"
-    "-DMUJOCO_BUILD_SIMULATE=OFF"
+    "-DMUJOCO_BUILD_SIMULATE=ON"
     "-DMUJOCO_BUILD_TESTS=OFF"
     "-DMUJOCO_WITH_USD=OFF"
     "-DMUJOCO_USE_FILAMENT=OFF"
@@ -46,15 +48,20 @@ cmake --install build
 echo "Copy plugins to install directory"
 
 mkdir -p install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libactuator.* install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libelasticity.* install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libsensor.* install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libsdf_plugin.* install/mujoco_plugin
+cp ${ROOT_DIR}/build/lib64/libactuator.* ${ROOT_DIR}/install/mujoco_plugin
+cp ${ROOT_DIR}/build/lib64/libelasticity.* ${ROOT_DIR}/install/mujoco_plugin
+cp ${ROOT_DIR}/build/lib64/libsensor.* ${ROOT_DIR}/install/mujoco_plugin
+cp ${ROOT_DIR}/build/lib64/libsdf_plugin.* ${ROOT_DIR}/install/mujoco_plugin
 
 echo "Make source distribution"
 
-bash ${ROOT_DIR}/python/make_sdist.sh
+bash ${ROOT_DIR}/python/make_sdist_manylinux.sh
 
 echo "Build python wheel"
 
-MUJOCO_PATH=${ROOT_DIR}/install MUJOCO_PLUGIN_PATH=${ROOT_DIR}/install/mujoco_plugin uv build --wheel --force-pep517 ${ROOT_DIR}/python/dist/mujoco-*.tar.gz
+export MUJOCO_PATH="${ROOT_DIR}/install"
+export MUJOCO_PLUGIN_PATH="${ROOT_DIR}/install/mujoco_plugin"
+
+${py_bin} -m pip wheel --use-pep517 -vvv ${ROOT_DIR}/python/dist/mujoco-*.tar.gz --wheel-dir ${ROOT_DIR}/python/dist
+
+auditwheel repair --wheel-dir ${ROOT_DIR}/python/dist ${ROOT_DIR}/python/dist/mujoco-*.whl

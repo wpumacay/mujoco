@@ -268,6 +268,7 @@ class BuildCMakeExtension(build_ext.build_ext):
         ),
         '-DCMAKE_Fortran_COMPILER:STRING=',
         '-DBUILD_TESTING:BOOL=OFF',
+        '-DMUJOCO_USE_DEFAULT_LD=ON'
     ]
 
     if self._mujoco_framework_path is not None:
