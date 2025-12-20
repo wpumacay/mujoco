@@ -102,7 +102,9 @@ filament::Texture* Create2dTexture(filament::Engine* engine, int width,
             data, num_bytes, format, filament::Texture::Type::UBYTE));
     // TODO: Revisit this to make it this work in WebGL
     #ifndef __EMSCRIPTEN__
-    texture->generateMipmaps(*engine);
+    if (!is_srgb) {
+      texture->generateMipmaps(*engine);
+    }
     #endif
   }
   return texture;
@@ -170,7 +172,9 @@ filament::Texture* CreateCubeTexture(filament::Engine* engine, int width,
     texture->setImage(*engine, 0, std::move(desc), offsets);
     // TODO: Revisit this to make it this work in WebGL
     #ifndef __EMSCRIPTEN__
-    texture->generateMipmaps(*engine);
+      if (!is_srgb) {
+        texture->generateMipmaps(*engine);
+      }
     #endif
   }
   return texture;
