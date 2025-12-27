@@ -221,6 +221,10 @@ public enum mjtGeom : int{
   mjGEOM_TRIANGLE = 108,
   mjGEOM_NONE = 1001,
 }
+public enum mjtProjection : int{
+  mjPROJ_PERSPECTIVE = 0,
+  mjPROJ_ORTHOGRAPHIC = 1,
+}
 public enum mjtCamLight : int{
   mjCAMLIGHT_FIXED = 0,
   mjCAMLIGHT_TRACK = 1,
@@ -426,6 +430,15 @@ public enum mjtConDataField : int{
   mjCONDATA_NORMAL = 5,
   mjCONDATA_TANGENT = 6,
   mjNCONDATA = 7,
+}
+public enum mjtRayDataField : int{
+  mjRAYDATA_DIST = 0,
+  mjRAYDATA_DIR = 1,
+  mjRAYDATA_ORIGIN = 2,
+  mjRAYDATA_POINT = 3,
+  mjRAYDATA_NORMAL = 4,
+  mjRAYDATA_DEPTH = 5,
+  mjNRAYDATA = 6,
 }
 public enum mjtSameFrame : int{
   mjSAMEFRAME_NONE = 0,
@@ -5474,7 +5487,7 @@ public unsafe struct mjModel_ {
   public double* cam_poscom0;
   public double* cam_pos0;
   public double* cam_mat0;
-  public int* cam_orthographic;
+  public int* cam_projection;
   public double* cam_fovy;
   public double* cam_ipd;
   public int* cam_resolution;
