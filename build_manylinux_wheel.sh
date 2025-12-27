@@ -26,6 +26,7 @@ njobs=4
 while [[ $# -gt 0 ]]; do
     case $1 in
         -h|--help) SHOW_HELP=true; shift ;;
+        --debug) build_type="Debug"; shift ;;
         --filament) build_filament=ON; shift ;;
         --vulkan) build_with_vulkan=ON; shift ;;
         --studio) build_studio=ON; shift ;;
@@ -39,6 +40,7 @@ if [[ "${build_filament}" == "ON" ]]; then
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
     build_simulate=OFF
+    build_studio=ON
 fi
 
 echo "Configuring ..."
