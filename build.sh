@@ -49,6 +49,7 @@ CMAKE_CONFIG_ARGS=(
     "-DMUJOCO_BUILD_SIMULATE=${build_simulate}"
     "-DMUJOCO_BUILD_TESTS=OFF"
     "-DMUJOCO_WITH_USD=OFF"
+    "-DMUJOCO_TEST_AI2=ON"
     "-DMUJOCO_USE_FILAMENT=${build_filament}"
     "-DMUJOCO_USE_FILAMENT_VULKAN=${build_with_vulkan}"
     "-DMUJOCO_BUILD_STUDIO=${build_studio}"
@@ -56,6 +57,7 @@ CMAKE_CONFIG_ARGS=(
     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
     "-DMUJOCO_ENABLE_AVX_INTRINSICS=${build_avx}"
     "-DCMAKE_INSTALL_LIBDIR=lib"
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
 )
 
 if [[ -n "${CMAKE_ARGS}" ]]; then
@@ -69,21 +71,21 @@ echo "Building ..."
 
 cmake --build build --config="${build_type}" --parallel ${njobs}
 
-echo "Installing to target dir ..."
+# echo "Installing to target dir ..."
 
-cmake --install build
+# cmake --install build
 
-echo "Copy plugins to install directory"
+# echo "Copy plugins to install directory"
 
-mkdir -p install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libactuator.* ${ROOT_DIR}/install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libelasticity.* ${ROOT_DIR}/install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libsensor.* ${ROOT_DIR}/install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libsdf_plugin.* ${ROOT_DIR}/install/mujoco_plugin
+# mkdir -p install/mujoco_plugin
+# cp ${ROOT_DIR}/build/lib/libactuator.* ${ROOT_DIR}/install/mujoco_plugin
+# cp ${ROOT_DIR}/build/lib/libelasticity.* ${ROOT_DIR}/install/mujoco_plugin
+# cp ${ROOT_DIR}/build/lib/libsensor.* ${ROOT_DIR}/install/mujoco_plugin
+# cp ${ROOT_DIR}/build/lib/libsdf_plugin.* ${ROOT_DIR}/install/mujoco_plugin
 
-if [[ "${build_filament}" == "ON" ]]; then
-    echo "Copy filament assets to install directory"
-    mkdir -p install/filament/assets
-    cp ${ROOT_DIR}/build/bin/assets/*.filamat ${ROOT_DIR}/install/filament/assets
-    cp ${ROOT_DIR}/build/bin/assets/*.ktx ${ROOT_DIR}/install/filament/assets
-fi
+# if [[ "${build_filament}" == "ON" ]]; then
+#     echo "Copy filament assets to install directory"
+#     mkdir -p install/filament/assets
+#     cp ${ROOT_DIR}/build/bin/assets/*.filamat ${ROOT_DIR}/install/filament/assets
+#     cp ${ROOT_DIR}/build/bin/assets/*.ktx ${ROOT_DIR}/install/filament/assets
+# fi

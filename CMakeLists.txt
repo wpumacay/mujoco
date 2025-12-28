@@ -49,6 +49,7 @@ if(NOT EMSCRIPTEN)
   option(MUJOCO_USE_FILAMENT "Use filament rendering" OFF)
   option(MUJOCO_USE_FILAMENT_VULKAN "Use vulkan backend for filament rendering" OFF)
   option(MUJOCO_USE_DEFAULT_LD "Use ld for linking, seems ld.gold and others don't work well in some systems" ON)
+  option(MUJOCO_TEST_AI2 "Build the custom tests we made during dev at ai2" ON)
 endif()
 
 if(EMSCRIPTEN)
@@ -264,6 +265,10 @@ endif()
 
 if(MUJOCO_BUILD_EXAMPLES)
   add_subdirectory(sample)
+endif()
+
+if (MUJOCO_TEST_AI2)
+  add_subdirectory(test/ai2)
 endif()
 
 if(MUJOCO_WITH_USD)
