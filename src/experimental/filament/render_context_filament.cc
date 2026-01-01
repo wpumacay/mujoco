@@ -19,7 +19,6 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <ios>
 #include <vector>
 
@@ -104,6 +103,7 @@ static int DefaultLoadAsset(const char* asset_filename, void* user_data,
   
   // Library directory (for installed packages)
   std::filesystem::path lib_dir = GetLibraryDirectory();
+
   if (!lib_dir.empty()) {
     search_paths.push_back(lib_dir / "filament" / "assets" / "data");
     search_paths.push_back(lib_dir.parent_path() / "filament" / "assets" / "data");
@@ -114,9 +114,6 @@ static int DefaultLoadAsset(const char* asset_filename, void* user_data,
   // Try each path
   for (const auto& base_path : search_paths) {
     std::filesystem::path full_path = base_path / asset_filename;
-    
-    std::cout << "search-path: " << base_path.string() << std::endl;
-
     std::ifstream file(full_path, std::ios::binary);
     if (file) {
       file.seekg(0, std::ios::end);

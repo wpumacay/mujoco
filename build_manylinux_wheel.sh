@@ -19,7 +19,6 @@ SHOW_HELP=false
 build_filament=OFF
 build_with_vulkan=OFF
 build_studio=OFF
-build_avx=ON
 build_simulate=ON
 njobs=4
 
@@ -30,7 +29,6 @@ while [[ $# -gt 0 ]]; do
         --filament) build_filament=ON; shift ;;
         --vulkan) build_with_vulkan=ON; shift ;;
         --studio) build_studio=ON; shift ;;
-        --no-simd) build_avx=OFF; shift ;;
         --njobs) njobs="$2"; shift 2 ;;
         *) echo "Unkown option: $1"; exit 1 ;;
     esac
@@ -58,7 +56,6 @@ CMAKE_CONFIG_ARGS=(
     "-DMUJOCO_BUILD_STUDIO=${build_studio}"
     "-DCMAKE_INSTALL_PREFIX=install"
     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
-    "-DMUJOCO_ENABLE_AVX_INTRINSICS=${build_avx}"
     "-DCMAKE_INSTALL_LIBDIR=lib"
 )
 
@@ -102,9 +99,6 @@ export MUJOCO_PATH="${ROOT_DIR}/install"
 export MUJOCO_PLUGIN_PATH="${ROOT_DIR}/install/mujoco_plugin"
 
 MUJOCO_CMAKE_ARGS=""
-if [[ "${build_avx}" != "ON" ]]; then
-    MUJOCO_CMAKE_ARGS="-DMUJOCO_ENABLE_AVX_INTRINSICS=OFF"
-fi
 
 MUJOCO_FILAMENT_ASSETS=""
 if [[ "${build_filament}" == "ON" ]]; then
