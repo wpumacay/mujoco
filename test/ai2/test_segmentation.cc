@@ -67,7 +67,8 @@ auto main(int argc, char** argv) -> int {
   mjv_updateScene(model, data, &option, NULL, &camera, mjCAT_ALL, &scene);
   mjr_render(viewport, &scene, &context);
 
-  std::unique_ptr<unsigned char[]> rgb_buffer(new unsigned char[3 * WIDTH * HEIGHT]);
+  std::unique_ptr<unsigned char[]> rgb_buffer(new unsigned char[CHANNELS * WIDTH * HEIGHT]);
+  std::memset(rgb_buffer.get(), 0, sizeof(unsigned char) * CHANNELS * WIDTH * HEIGHT);
 
   mjr_readPixels(rgb_buffer.get(), nullptr, viewport, &context);
 
