@@ -321,6 +321,8 @@ To enable this routine set ``Model.opt.ls_parallel=True`` or add a custom numeri
 
   The parallel linesearch is currently an experimental feature.
 
+.. _mjwBatch:
+
 Batched :class:`Model <mujoco_warp.Model>` Fields
 =================================================
 
@@ -350,8 +352,19 @@ It is possible to override the field shape and set the field values after graph 
      mjw.step(m, d)
 
    # set batched values
-   dof_damping_batch = wp.array([[0.1], [0.2]], dtype=float)
-   wp.copy(m.dof_damping, dof_damping_batch)  # m.dof = dof_damping_batch will not update the captured graph
+   dof_damping = wp.array([[0.1], [0.2]], dtype=float)
+   wp.copy(m.dof_damping, dof_damping)  # m.dof = dof_damping will not update the captured graph
+
+Modifying fields
+----------------
+
+The recommended workflow for modifying an :ref:`mjModel` field is to first modify the corresponding :ref:`mjSpec` and
+then compile to create a new :ref:`mjModel` with the updated field. However, compilation currently requires a host call.
+
+Certain fields are safe to modify directly without compilation, enabling on-device updates. Please see
+:ref:`mjModel changes<sichange>` for details about specific fields. Additionally,
+`GitHub issue 893 <https://github.com/google-deepmind/mujoco_warp/issues/893>`__ tracks adding on-device updates for a
+subset of fields.
 
 .. admonition:: Heterogeneous worlds
    :class: note
@@ -467,6 +480,16 @@ running its main collision pipeline.
 Sparse Jacobians are not currently implemented and ``Data`` fields: ``ten_J``, ``actuator_moment``, ``flexedge_J``, and
 ``efc.J`` are always represented as dense matrices. Support for sparse Jacobians is tracked in GitHub issue
 `#88 <https://github.com/google-deepmind/mujoco_warp/issues/88>`__.
+
+**Why do some arrays have different shapes compared to mjModel or mjData?**
+
+By default for batched simulation, many :class:`mjw.Data <mujoco_warp.Data>` fields having a leading batch dimension of
+size ``Data.nworld``. Some :class:`mjw.Model <mujoco_warp.Model>` fields having a leading batch dimension with size
+``1``, indicating that this
+:ref:`field can be overridden with an array of batched parameters for domain randomization <mjwBatch>`.
+
+Additionally, certain fields including ``Model.qM``, ``Data.efc.J``, and ``Data.efc.D`` are padded to enable fast
+loading on GPU.
 
 Compilation
 -----------
