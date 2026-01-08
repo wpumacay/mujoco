@@ -15,7 +15,6 @@
 #include "experimental/filament/render_context_filament.h"
 
 #include <cstdint>
-#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -148,7 +147,6 @@ static void CheckFilamentContext() {
   }
 }
 
-
 extern "C" {
 
 void mjr_defaultFilamentConfig(mjrFilamentConfig* config) {
@@ -171,7 +169,6 @@ void mjr_makeContext(const mjModel* m, mjrContext* con, int fontscale) {
   mjr_freeContext(con);
   mjrFilamentConfig cfg;
   mjr_defaultFilamentConfig(&cfg);
-  cfg.load_asset = DefaultLoadAsset;
   mjr_makeFilamentContext(m, con, &cfg);
 }
 
