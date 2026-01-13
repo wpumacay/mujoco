@@ -33,7 +33,8 @@ ABSL_FLAG(int, window_height, 720, "Window height");
 ABSL_FLAG(std::string, model_file, "", "MuJoCo model file.");
 
 std::string Resolve(std::string_view path) {
-  return std::string("assets/") + std::string(path);
+  std::string_view subpath = path.substr(path.find(':') + 1);
+  return std::string("assets/") + std::string(subpath);
 }
 
 class FileResource {
@@ -75,6 +76,8 @@ int main(int argc, char** argv, char** envp) {
   const std::string ini_path = std::string(home ? home : ".") + "/.mujoco.ini";
 
   mjpResourceProvider resource_provider;
+  mjp_defaultResourceProvider(&resource_provider);
+
   resource_provider.open = [](mjResource* resource) {
     const std::string resolved_path = Resolve(resource->name);
     FileResource* f = new FileResource(resolved_path);

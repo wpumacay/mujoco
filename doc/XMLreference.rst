@@ -544,7 +544,7 @@ from its default.
 
 .. _option-flag-damper:
 
-:at:`damping`: :at-val:`[disable, enable], "enable"`
+:at:`damper`: :at-val:`[disable, enable], "enable"`
    This flag disables passive joint and tendon dampers. If passive :ref:`spring <option-flag-spring>` forces are also
    disabled, **all** passive forces are disabled, including gravity compensation, fluid forces, forces computed by the
    :ref:`mjcb_passive` callback, and forces computed by :ref:`plugins <exPlugin>` when passed the
@@ -828,7 +828,7 @@ has any effect. The settings here are global and apply to the entire model.
 
 :at:`usethread`: :at-val:`[false, true], "true"`
    If this attribute is "true", the model compiler will run in multi-threaded mode. Currently multi-threading is used
-   for computing the length ranges of actuators and for parallel loading of meshes.
+   for computing the length ranges of actuators and for parallel loading and processing of meshes.
 
 .. _compiler-fusestatic:
 
