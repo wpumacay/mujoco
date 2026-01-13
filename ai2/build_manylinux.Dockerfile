@@ -1,7 +1,7 @@
 FROM quay.io/pypa/manylinux_2_28_x86_64
 
 RUN :\
-    && dnf update \
+    && dnf update -y \
     && dnf install -y \
         wayland-devel mesa-libGL-devel libXinerama-devel \
         libXcursor-devel libxkbcommon-x11-devel \
