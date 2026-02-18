@@ -1486,10 +1486,11 @@ def _get_data_into_warp(
       if field.name in (
           'actuator_moment',
           'contact',
-          'efc_J',
           'qM',
           'qLD',
           'qLDiagInv',
+          'ten_J',
+          'flexedge_J',
       ):
         continue
       if field.name.startswith('efc_'):
@@ -1960,5 +1961,5 @@ def create_render_context(
     Render context object that is JAX compatible.
   """
   _check_warp_installed()
-  from mujoco.mjx.warp import render as mjxw_render  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
-  return mjxw_render.create_render_context(mjm, nworld=nworld, **kwargs)
+  from mujoco.mjx.warp import io as mjxw_io  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
+  return mjxw_io.create_render_context(mjm, nworld=nworld, **kwargs)

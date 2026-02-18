@@ -16,6 +16,7 @@
 """DO NOT EDIT. This file is auto-generated."""
 
 import dataclasses
+import functools
 import jax
 from mujoco.mjx._src import types
 from mujoco.mjx.warp import ffi
@@ -42,7 +43,6 @@ _c = mjwarp.Contact(
 _e = mjwarp.Constraint(
     **{f.name: None for f in dataclasses.fields(mjwarp.Constraint) if f.init}
 )
-
 
 @ffi.format_args_for_warp
 def _kinematics_shim(
@@ -159,7 +159,7 @@ def _kinematics_jax_impl(m: types.Model, d: types.Data):
       num_outputs=11,
       output_dims=output_dims,
       vmap_method=None,
-      in_out_argnames={
+      in_out_argnames=set([
           'geom_xmat',
           'geom_xpos',
           'site_xmat',
@@ -171,8 +171,8 @@ def _kinematics_jax_impl(m: types.Model, d: types.Data):
           'xmat',
           'xpos',
           'xquat',
-      },
-      stage_in_argnames={
+      ]),
+      stage_in_argnames=set([
           'body_ipos',
           'body_iquat',
           'body_pos',
@@ -198,8 +198,8 @@ def _kinematics_jax_impl(m: types.Model, d: types.Data):
           'xmat',
           'xpos',
           'xquat',
-      },
-      stage_out_argnames={
+      ]),
+      stage_out_argnames=set([
           'geom_xmat',
           'geom_xpos',
           'site_xmat',
@@ -211,7 +211,7 @@ def _kinematics_jax_impl(m: types.Model, d: types.Data):
           'xmat',
           'xpos',
           'xquat',
-      },
+      ]),
       graph_mode=m.opt._impl.graph_mode,
   )
   out = jf(
@@ -282,7 +282,9 @@ def kinematics(m: types.Model, d: types.Data):
 
 @kinematics.def_vmap
 @ffi.marshal_custom_vmap
-def kinematics_vmap(unused_axis_size, is_batched, m, d):
+def kinematics_vmap(
+    unused_axis_size, is_batched, m: types.Model, d: types.Data
+):
   d = kinematics(m, d)
   return d, is_batched[1]
 
@@ -385,15 +387,15 @@ def _tendon_jax_impl(m: types.Model, d: types.Data):
       num_outputs=6,
       output_dims=output_dims,
       vmap_method=None,
-      in_out_argnames={
+      in_out_argnames=set([
           'ten_J',
           'ten_length',
           'ten_wrapadr',
           'ten_wrapnum',
           'wrap_obj',
           'wrap_xpos',
-      },
-      stage_in_argnames={
+      ]),
+      stage_in_argnames=set([
           'cdof',
           'geom_size',
           'geom_xmat',
@@ -402,8 +404,8 @@ def _tendon_jax_impl(m: types.Model, d: types.Data):
           'site_xpos',
           'subtree_com',
           'ten_length',
-      },
-      stage_out_argnames={'ten_length'},
+      ]),
+      stage_out_argnames=set(['ten_length']),
       graph_mode=m.opt._impl.graph_mode,
   )
   out = jf(
@@ -463,6 +465,6 @@ def tendon(m: types.Model, d: types.Data):
 
 @tendon.def_vmap
 @ffi.marshal_custom_vmap
-def tendon_vmap(unused_axis_size, is_batched, m, d):
+def tendon_vmap(unused_axis_size, is_batched, m: types.Model, d: types.Data):
   d = tendon(m, d)
   return d, is_batched[1]

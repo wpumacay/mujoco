@@ -16,6 +16,7 @@
 """DO NOT EDIT. This file is auto-generated."""
 
 import dataclasses
+import functools
 import jax
 from mujoco.mjx._src import types
 from mujoco.mjx.warp import ffi
@@ -42,7 +43,6 @@ _c = mjwarp.Contact(
 _e = mjwarp.Constraint(
     **{f.name: None for f in dataclasses.fields(mjwarp.Constraint) if f.init}
 )
-
 
 @ffi.format_args_for_warp
 def _forward_shim(
@@ -1012,7 +1012,7 @@ def _forward_jax_impl(m: types.Model, d: types.Data):
       num_outputs=92,
       output_dims=output_dims,
       vmap_method=None,
-      in_out_argnames={
+      in_out_argnames=set([
           'act_dot',
           'actuator_force',
           'actuator_length',
@@ -1105,8 +1105,8 @@ def _forward_jax_impl(m: types.Model, d: types.Data):
           'efc__state',
           'efc__type',
           'efc__vel',
-      },
-      stage_in_argnames={
+      ]),
+      stage_in_argnames=set([
           'act',
           'act_dot',
           'actuator_acc0',
@@ -1242,8 +1242,8 @@ def _forward_jax_impl(m: types.Model, d: types.Data):
           'xmat',
           'xpos',
           'xquat',
-      },
-      stage_out_argnames={
+      ]),
+      stage_out_argnames=set([
           'act_dot',
           'actuator_force',
           'actuator_length',
@@ -1276,7 +1276,7 @@ def _forward_jax_impl(m: types.Model, d: types.Data):
           'xmat',
           'xpos',
           'xquat',
-      },
+      ]),
       graph_mode=m.opt._impl.graph_mode,
   )
   out = jf(
@@ -1814,7 +1814,7 @@ def forward(m: types.Model, d: types.Data):
 
 @forward.def_vmap
 @ffi.marshal_custom_vmap
-def forward_vmap(unused_axis_size, is_batched, m, d):
+def forward_vmap(unused_axis_size, is_batched, m: types.Model, d: types.Data):
   d = forward(m, d)
   return d, is_batched[1]
 
@@ -2795,7 +2795,7 @@ def _step_jax_impl(m: types.Model, d: types.Data):
       num_outputs=96,
       output_dims=output_dims,
       vmap_method=None,
-      in_out_argnames={
+      in_out_argnames=set([
           'act',
           'act_dot',
           'actuator_force',
@@ -2892,8 +2892,8 @@ def _step_jax_impl(m: types.Model, d: types.Data):
           'efc__state',
           'efc__type',
           'efc__vel',
-      },
-      stage_in_argnames={
+      ]),
+      stage_in_argnames=set([
           'act',
           'act_dot',
           'actuator_acc0',
@@ -3029,8 +3029,8 @@ def _step_jax_impl(m: types.Model, d: types.Data):
           'xmat',
           'xpos',
           'xquat',
-      },
-      stage_out_argnames={
+      ]),
+      stage_out_argnames=set([
           'act',
           'act_dot',
           'actuator_force',
@@ -3067,7 +3067,7 @@ def _step_jax_impl(m: types.Model, d: types.Data):
           'xmat',
           'xpos',
           'xquat',
-      },
+      ]),
       graph_mode=m.opt._impl.graph_mode,
   )
   out = jf(
@@ -3611,6 +3611,6 @@ def step(m: types.Model, d: types.Data):
 
 @step.def_vmap
 @ffi.marshal_custom_vmap
-def step_vmap(unused_axis_size, is_batched, m, d):
+def step_vmap(unused_axis_size, is_batched, m: types.Model, d: types.Data):
   d = step(m, d)
   return d, is_batched[1]

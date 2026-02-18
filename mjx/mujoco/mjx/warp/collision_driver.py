@@ -16,6 +16,7 @@
 """DO NOT EDIT. This file is auto-generated."""
 
 import dataclasses
+import functools
 import jax
 from mujoco.mjx._src import types
 from mujoco.mjx.warp import ffi
@@ -42,7 +43,6 @@ _c = mjwarp.Contact(
 _e = mjwarp.Constraint(
     **{f.name: None for f in dataclasses.fields(mjwarp.Constraint) if f.init}
 )
-
 
 @ffi.format_args_for_warp
 def _collision_shim(
@@ -249,7 +249,7 @@ def _collision_jax_impl(m: types.Model, d: types.Data):
       num_outputs=15,
       output_dims=output_dims,
       vmap_method=None,
-      in_out_argnames={
+      in_out_argnames=set([
           'nacon',
           'ncollision',
           'contact__dim',
@@ -265,8 +265,8 @@ def _collision_jax_impl(m: types.Model, d: types.Data):
           'contact__solreffriction',
           'contact__type',
           'contact__worldid',
-      },
-      stage_in_argnames={
+      ]),
+      stage_in_argnames=set([
           'geom_aabb',
           'geom_friction',
           'geom_gap',
@@ -285,8 +285,8 @@ def _collision_jax_impl(m: types.Model, d: types.Data):
           'pair_solimp',
           'pair_solref',
           'pair_solreffriction',
-      },
-      stage_out_argnames={},
+      ]),
+      stage_out_argnames=set([]),
       graph_mode=m.opt._impl.graph_mode,
   )
   out = jf(
@@ -404,6 +404,6 @@ def collision(m: types.Model, d: types.Data):
 
 @collision.def_vmap
 @ffi.marshal_custom_vmap
-def collision_vmap(unused_axis_size, is_batched, m, d):
+def collision_vmap(unused_axis_size, is_batched, m: types.Model, d: types.Data):
   d = collision(m, d)
   return d, is_batched[1]
