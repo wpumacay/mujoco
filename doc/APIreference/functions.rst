@@ -300,6 +300,94 @@ Copy concatenated state components specified by ``sig`` from  ``state`` into ``d
 
 Copy state from src to dst.
 
+.. _mj_readCtrl:
+
+`mj_readCtrl <#mj_readCtrl>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_readCtrl
+
+Read the control value for an actuator at a given time, taking delays into account. If no history buffer exists, return
+``mjData.ctrl[id]``. If a history buffer exists (:ref:`nsample<actuator-general-nsample>` > 0), read from the delay
+buffer at ``time - actuator_delay[id]`` using the requested interpolation order:
+
+- ``interp = 0``: Zero-order hold (piecewise constant)
+- ``interp = 1``: Piecewise Linear
+- ``interp = 2``: Cubic Spline (Catmull-Rom)
+- ``interp = -1``: Use the actuator's :ref:`interp<actuator-general-interp>` value.
+
+Constant extrapolation is used outside of buffer bounds.
+
+Note that the subtraction of the delay changes the semantic of the ``time`` argument from "time at which values were
+pushed into the delay buffer" to "time at which values come out of the delay buffer". See :ref:`Delays<CDelay>` for
+details.
+
+.. _mj_readSensor:
+
+`mj_readSensor <#mj_readSensor>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_readSensor
+
+Read a sensor value at a given time, taking delays into account. If no history buffer exists, return a pointer to the
+sensor's slice of ``mjData.sensordata``. If a history buffer exists (:ref:`nsample<sensor-nsample>` > 0), read from the
+history buffer at ``time - sensor_delay[id]``. Note that the subtraction of the delay changes the semantic of the
+``time`` argument from "time at which values were pushed into the delay buffer" to "time at which values come out of the
+delay buffer". See :ref:`Delays<CDelay>` for details.
+
+**Return value semantics:**
+
+- If no history buffer exists (:ref:`nsample<sensor-nsample>` = 0), returns a pointer to the sensor's slice of
+  ``mjData.sensordata``.
+- If a history buffer exists (:ref:`nsample<sensor-nsample>` > 0) and the requested time matches a stored sample
+  (always true for ``interp = 0``), returns a pointer to the data in the history buffer.
+- If interpolation is required (``interp = 1 or 2``), returns ``NULL`` and writes the interpolated result to
+  ``result`` (must be of size ``dim``).
+
+**Interpolation:**
+
+- ``interp = 0``: Zero-order hold (piecewise constant)
+- ``interp = 1``: Piecewise Linear
+- ``interp = 2``: Cubic Spline (Catmull-Rom)
+- ``interp = -1``: Use the value in :ref:`interp<sensor-interp>`
+
+Constant extrapolation is used outside of buffer bounds.
+
+
+**Usage:**
+
+.. code-block:: C
+
+   // read sensor 0 of data size `dim` at time t
+   mjtNum result[dim];
+   const mjtNum* ptr = mj_readSensor(m, d, 0, t, result, /* interp = */ 1);
+   const mjtNum* data = ptr ? ptr : result;
+
+.. _mj_initCtrlHistory:
+
+`mj_initCtrlHistory <#mj_initCtrlHistory>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_initCtrlHistory
+
+Initialize the history buffer for an actuator with custom values. The ``times`` array specifies the timestamps for each
+sample (must be length :ref:`nsample<actuator-general-nsample>`), and ``values`` specifies the control values. If
+``times`` is ``NULL``, the existing timestamps in the buffer are used, and only the values are updated.
+See :ref:`Delays<CDelay>` for details.
+
+.. _mj_initSensorHistory:
+
+`mj_initSensorHistory <#mj_initSensorHistory>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_initSensorHistory
+
+Initialize the history buffer for a sensor with custom values. The ``times`` array specifies the timestamps for each
+sample (must be length :ref:`nsample<sensor-nsample>`), and ``values`` specifies the sensor values (must be of size
+``nsample * dim``). If ``times`` is ``NULL``, the existing timestamps in the buffer are used.
+The ``phase`` argument sets the user slot, which stores the last computation time for interval sensors.
+See :ref:`Delays<CDelay>` for details.
+
 .. _mj_setKeyframe:
 
 `mj_setKeyframe <#mj_setKeyframe>`__
@@ -1150,19 +1238,6 @@ after  :ref:`mj_kinematics`, or functions that call it (e.g. :ref:`mj_fwdPositio
 intersect with all geoms types, are :ref:`mj_ray` which casts a single ray, and :ref:`mj_multiRay` which casts multiple
 rays from a single point.
 
-.. _mj_multiRay:
-
-`mj_multiRay <#mj_multiRay>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. mujoco-include:: mj_multiRay
-
-Intersect multiple rays emanating from a single point.
-
-Similar semantics to mj_ray, but vec is an array of (nray x 3) directions.
-
-*Nullable:* ``geomgroup``
-
 .. _mj_ray:
 
 `mj_ray <#mj_ray>`__
@@ -1174,12 +1249,29 @@ Intersect ray ``pnt+x*vec, x >= 0`` with geoms.
 
 - Return distance ``x`` to nearest surface, or -1 if no intersection.
 - If ``geomid`` is not NULL, write the id of the intersected geom or -1 if not intersection.
+- If ``normal`` is not NULL, write the surface normal at the intersection point. The normal always points **out of the
+  geometry**, regardless of the ray's direction (i.e., including rays hitting the surface from the inside).
 - Exclude geoms in body with id ``bodyexclude``, use -1 to include all bodies.
 - ``geomgroup`` is an array of length :ref:`mjNGROUP<glNumeric>`, where 1 means the group should be included. Pass
   NULL to skip geom group exclusion.
 - If ``flg_static`` is 0, static geoms will be excluded.
 
-*Nullable:* ``geomgroup``, ``geomid``
+*Nullable:* ``geomgroup``, ``geomid``, ``normal``
+
+.. _mj_multiRay:
+
+`mj_multiRay <#mj_multiRay>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_multiRay
+
+Intersect multiple rays emanating from a single point, compute normals if given.
+
+Similar semantics to mj_ray, but vec, normal and dist are arrays.
+
+Geoms further than cutoff are ignored.
+
+*Nullable:* ``geomgroup``, ``geomid``, ``normal``
 
 .. _mj_rayHfield:
 
@@ -1190,6 +1282,8 @@ Intersect ray ``pnt+x*vec, x >= 0`` with geoms.
 
 Intersect ray with hfield; return nearest distance or -1 if no intersection.
 
+*Nullable:* ``normal``
+
 .. _mj_rayMesh:
 
 `mj_rayMesh <#mj_rayMesh>`__
@@ -1198,6 +1292,8 @@ Intersect ray with hfield; return nearest distance or -1 if no intersection.
 .. mujoco-include:: mj_rayMesh
 
 Intersect ray with mesh; return nearest distance or -1 if no intersection.
+
+*Nullable:* ``normal``
 
 .. _mju_rayGeom:
 
@@ -1208,17 +1304,19 @@ Intersect ray with mesh; return nearest distance or -1 if no intersection.
 
 Intersect ray with pure geom; return nearest distance or -1 if no intersection.
 
-.. _mju_rayFlex:
+*Nullable:* ``normal``
 
-`mju_rayFlex <#mju_rayFlex>`__
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _mj_rayFlex:
 
-.. mujoco-include:: mju_rayFlex
+`mj_rayFlex <#mj_rayFlex>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_rayFlex
 
 Intersect ray with flex; return nearest distance or -1 if no intersection,
-and also output nearest vertex id.
+and also output nearest vertex id and surface normal.
 
-*Nullable:* ``vertid``
+*Nullable:* ``vertid``, ``normal``
 
 .. _mju_raySkin:
 
@@ -1347,6 +1445,25 @@ The VFS must first be allocated using :ref:`mj_defaultVFS` and must be freed wit
 
 Initialize an empty VFS, :ref:`mj_deleteVFS` must be called to deallocate the VFS.
 
+.. _mj_mountVFS:
+
+`mj_mountVFS <#mj_mountVFS>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_mountVFS
+
+Mount a ResourceProvider to handle file operations under the given path; return 0: success,
+2: repeated name, -1: invalid resource provider.
+
+.. _mj_unmountVFS:
+
+`mj_unmountVFS <#mj_unmountVFS>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mj_unmountVFS
+
+Unmount a previously mounted ResourceProvider; return 0: success, -1: not found in VFS.
+
 .. _mj_addFileVFS:
 
 `mj_addFileVFS <#mj_addFileVFS>`__
@@ -1438,6 +1555,77 @@ Get the internal asset cache used by the compiler.
 .. mujoco-include:: mj_clearCache
 
 Clear the asset cache.
+
+.. _Resources:
+
+Resources
+^^^^^^^^^
+
+Resources are the interface between :ref:`resource providers <exProvider>` and MuJoCo model compilation code.
+These functions provide the means to query the resource provider and obtain resources.
+.. _mju_openResource:
+
+`mju_openResource <#mju_openResource>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mju_openResource
+
+Open a resource; if the name doesn't have a prefix matching a registered resource provider,
+then the OS filesystem is used.
+
+*Nullable:* ``dir``, ``vfs``, ``error``
+
+.. _mju_closeResource:
+
+`mju_closeResource <#mju_closeResource>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mju_closeResource
+
+Close a resource; no-op if resource is NULL.
+
+.. _mju_readResource:
+
+`mju_readResource <#mju_readResource>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mju_readResource
+
+Set buffer to bytes read from the resource and return number of bytes in buffer;
+return negative value if error.
+
+.. _mju_getResourceDir:
+
+`mju_getResourceDir <#mju_getResourceDir>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mju_getResourceDir
+
+For a resource with a name partitioned as {dir}{filename}, get the dir and ndir pointers.
+
+.. _mju_isModifiedResource:
+
+`mju_isModifiedResource <#mju_isModifiedResource>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mju_isModifiedResource
+
+Compare resource timestamp to provided timestamp.
+
+Return 0 if timestamps match, >0 if resource is newer, <0 if resource is older.
+
+.. _mju_decodeResource:
+
+`mju_decodeResource <#mju_decodeResource>`__
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. mujoco-include:: mju_decodeResource
+
+Find the decoder for a resource and return the decoded spec.
+
+The caller takes ownership of the spec and is responsible for cleaning it up.
+
+*Nullable:* ``vfs``
 
 .. _Initialization:
 

@@ -60,9 +60,13 @@ namespace {
 // (dim0, dim1).
 #define X_ARRAY_SHAPE(dim0, dim1) XArrayShapeImpl(#dim1)((dim0), (dim1))
 
-std::vector<int> XArrayShapeImpl1D(int dim0, int dim1) { return {dim0}; }
+std::vector<mjtSize> XArrayShapeImpl1D(mjtSize dim0, mjtSize dim1) {
+  return {dim0};
+}
 
-std::vector<int> XArrayShapeImpl2D(int dim0, int dim1) { return {dim0, dim1}; }
+std::vector<mjtSize> XArrayShapeImpl2D(mjtSize dim0, mjtSize dim1) {
+  return {dim0, dim1};
+}
 
 constexpr auto XArrayShapeImpl(const std::string_view dim1_str) {
   if (dim1_str == "1") {
@@ -79,16 +83,20 @@ inline std::size_t NConMax(const mjData* d) {
 }  // namespace
 
 // ==================== MJOPTION ===============================================
-#define X(var, dim) , var(InitPyArray(std::array{dim}, ptr_->var, owner_))
+#define X(type, var, dim)
+#define XVEC(type, var, dim) \
+  , var(InitPyArray(std::array{dim}, ptr_->var, owner_))
 MjOptionWrapper::MjWrapper()
     : WrapperBase([]() {
         raw::MjOption* const opt = new raw::MjOption;
         mj_defaultOption(opt);
         return opt;
-      }()) MJOPTION_VECTORS {}
+      }()) MJOPTION_FIELDS {}
 
 MjOptionWrapper::MjWrapper(raw::MjOption* ptr, py::handle owner)
-    : WrapperBase(ptr, owner) MJOPTION_VECTORS {}
+    : WrapperBase(ptr, owner) MJOPTION_FIELDS {}
+
+#undef XVEC
 #undef X
 
 MjOptionWrapper::MjWrapper(const MjOptionWrapper& other) : MjOptionWrapper() {
@@ -743,7 +751,6 @@ void MjDataWrapper::Serialize(std::ostream& output) const {
 
   // Write buffer and arena contents
   {
-    MJDATA_POINTERS_PREAMBLE((this->model_->get()))
 
 #define X(type, name, nr, nc)    \
   WriteBytes(output, ptr_->name, \
@@ -823,7 +830,6 @@ MjDataWrapper MjDataWrapper::Deserialize(std::istream& input) {
 
   // Read buffer and arena contents
   {
-    MJDATA_POINTERS_PREAMBLE((&m))
 
 #define X(type, name, nr, nc) \
   ReadBytes(input, d->name, sizeof(type) * (m.nr) * (nc));

@@ -438,13 +438,14 @@ typedef struct mjsFlex_ {          // flex specification
   // other properties
   int dim;                         // element dimensionality
   double radius;                   // radius around primitive element
+  double size[3];                  // vertex bounding box half sizes in qpos0
   mjtByte internal;                // enable internal collisions
   mjtByte flatskin;                // render flex skin with flat shading
   int selfcollide;                 // mode for flex self collision
   int vertcollide;                 // mode for vertex collision
   int passive;                     // mode for passive collisions
   int activelayers;                // number of active element layers in 3D
-  int group;                       // group for visualizatioh
+  int group;                       // group for visualization
   double edgestiffness;            // edge stiffness
   double edgedamping;              // edge damping
   float rgba[4];                   // rgba when material is omitted
@@ -697,6 +698,9 @@ typedef struct mjsActuator_ {      // actuator specification
 
   // other
   int group;                       // group
+  int nsample;                     // number of samples in history buffer
+  int interp;                      // interpolation order (0=ZOH, 1=linear, 2=cubic)
+  double delay;                    // delay time in seconds; 0: no delay
   mjDoubleVec* userdata;           // user data
   mjsPlugin plugin;                // actuator plugin
   mjString* info;                  // message appended to compiler errors
@@ -722,6 +726,12 @@ typedef struct mjsSensor_ {        // sensor specification
   // output post-processing
   double cutoff;                   // cutoff for real and positive datatypes
   double noise;                    // noise stdev
+
+  // history buffer
+  int nsample;                     // number of samples in history buffer
+  int interp;                      // interpolation order (0=ZOH, 1=linear, 2=cubic)
+  double delay;                    // delay time in seconds
+  double interval[2];              // [period, time_prev] in seconds
 
   // other
   mjDoubleVec* userdata;           // user data

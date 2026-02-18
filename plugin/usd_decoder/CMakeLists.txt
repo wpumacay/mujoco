@@ -11,16 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-find_package(pxr REQUIRED)
-
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_LIBDIR}")
 set(USD_DECODER_SRCS
     usd_decoder.cc
     kinematic_tree.cc
     kinematic_tree.h
     material_parsing.cc
     material_parsing.h
-    utils.h
 )
 
 add_library(usd_decoder_plugin SHARED ${USD_DECODER_SRCS})

@@ -16,10 +16,10 @@
 #define MUJOCO_SRC_EXPERIMENTAL_PLATFORM_IMGUI_WIDGETS_H_
 
 #include <optional>
-#include <utility>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -39,12 +39,14 @@ static constexpr const char ICON_FA_DIAMOND[] = "\xEF\x88\x99";
 static constexpr const char ICON_FA_EJECT[] = "\xEF\x81\x92";
 static constexpr const char ICON_FA_FAST_FORWARD[] = "\xEF\x81\x90";
 static constexpr const char ICON_FA_MOON[] = "\xEF\x86\x86";
+static constexpr const char ICON_FA_MAGIC[] = "\xEF\x83\x90";
 static constexpr const char ICON_FA_PAUSE[] = "\xEF\x81\x8C";
 static constexpr const char ICON_FA_PLAY[] = "\xEF\x81\x8B";
 static constexpr const char ICON_FA_REFRESH[] = "\xEF\x80\xA1";
 static constexpr const char ICON_FA_SQUARE_O[] = "\xEF\x87\x9B";
 static constexpr const char ICON_FA_SUN[] = "\xEF\x86\x85";
 static constexpr const char ICON_FA_TACHOMETER[] = "\xEF\x83\xA4";
+static constexpr const char ICON_FA_TRASH_CAN[] = "\xEF\x87\xB8";
 static constexpr const char ICON_FA_UNDO[] = "\xEF\x83\xA2";
 
 using KeyValues = std::unordered_map<std::string, std::string>;
@@ -86,14 +88,15 @@ T ReadIniValue(const KeyValues& key_values, const std::string& key, T def) {
 // styles when going out of scope.
 struct ScopedStyle {
   ScopedStyle() = default;
-  ~ScopedStyle() {
-    Reset();
-  }
+  ~ScopedStyle() { Reset(); }
 
   ScopedStyle(const ScopedStyle&) = delete;
   ScopedStyle& operator=(const ScopedStyle&) = delete;
   ScopedStyle(ScopedStyle&& other) { Swap(other); }
-  ScopedStyle& operator=(ScopedStyle&& other) { Swap(other); return *this; }
+  ScopedStyle& operator=(ScopedStyle&& other) {
+    Swap(other);
+    return *this;
+  }
 
   void Swap(ScopedStyle& other) {
     std::swap(num_colors, other.num_colors);
@@ -128,9 +131,6 @@ struct ScopedStyle {
   int num_colors = 0;
   int num_vars = 0;
 };
-
-// ImGui file dialog.
-bool ImGui_FileDialog(char* buf, int len);
 
 // ImGui Slider that supports both float and double types.
 bool ImGui_Slider(const char* name, mjtNum* value, mjtNum min, mjtNum max);
@@ -262,6 +262,37 @@ bool ImGui_Input(const char* name, T* value, ImGuiOpts<T> opts = {}) {
 inline bool ImGui_IsChordJustPressed(ImGuiKeyChord chord) {
   return ImGui::IsKeyChordPressed(chord, 0);
 }
+
+// Stateful button that displays the given color when active, and shows a
+// semi-transparent hover color (controlled by hover_alpha) when inactive.
+inline bool ImGui_ColorButton(const char* label, bool active, ImColor color,
+                              const ImVec2& size = ImVec2(0, 0),
+                              float hover_alpha = 0.5f) {
+  ScopedStyle style;
+  const ImColor hover(color.Value.x, color.Value.y, color.Value.z,
+                      color.Value.w * hover_alpha);
+  if (active) {
+    style.Color(ImGuiCol_Button, color);
+    style.Color(ImGuiCol_ButtonHovered, color);
+  } else {
+    style.Color(ImGuiCol_ButtonHovered, hover);
+  }
+  style.Color(ImGuiCol_ButtonActive, color);
+  return ImGui::Button(label, size);
+}
+
+// Begin a boxed section with outer borders - use EndBoxSection to close.
+inline bool BeginBoxSection(const char* id, ImGuiTableFlags extra_flags = 0) {
+  ImGuiTableFlags flags = ImGuiTableFlags_BordersOuter | extra_flags;
+  if (ImGui::BeginTable(id, 1, flags)) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    return true;
+  }
+  return false;
+}
+
+inline void EndBoxSection() { ImGui::EndTable(); }
 
 // Saves the given contents to the clipboard if the clipboard is available.
 void MaybeSaveToClipboard(const std::string& contents);

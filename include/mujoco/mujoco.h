@@ -16,7 +16,7 @@
 #define MUJOCO_MUJOCO_H_
 
 // header version; should match the library version as returned by mj_version()
-#define mjVERSION_HEADER 341
+#define mjVERSION_HEADER 3005001
 
 // needed to define size_t, fabs and log10
 #include <stdlib.h>
@@ -77,6 +77,13 @@ MJAPI extern const char* mjRNDSTRING[mjNRNDFLAG][3];
 
 // Initialize an empty VFS, mj_deleteVFS must be called to deallocate the VFS.
 MJAPI void mj_defaultVFS(mjVFS* vfs);
+
+// Mount a ResourceProvider to handle file operations under the given path; return 0: success,
+// 2: repeated name, -1: invalid resource provider.
+MJAPI int mj_mountVFS(mjVFS* vfs, const char* filepath, const mjpResourceProvider* provider);
+
+// Unmount a previously mounted ResourceProvider; return 0: success, -1: not found in VFS.
+MJAPI int mj_unmountVFS(mjVFS* vfs, const char* filename);
 
 // Add file to VFS; return 0: success, 2: repeated name, -1: failed to load.
 MJAPI int mj_addFileVFS(mjVFS* vfs, const char* directory, const char* filename);
@@ -486,6 +493,29 @@ MJAPI void mj_setState(const mjModel* m, mjData* d, const mjtNum* state, int sig
 // Copy state from src to dst.
 MJAPI void mj_copyState(const mjModel* m, const mjData* src, mjData* dst, int sig);
 
+// Read ctrl value for actuator at given time.
+// Returns d->ctrl[id] if no history, otherwise reads from history buffer.
+// interp: 0=zero-order-hold, 1=linear, 2=cubic spline.
+MJAPI mjtNum mj_readCtrl(const mjModel* m, const mjData* d, int id, mjtNum time, int interp);
+
+// Read sensor value from history buffer at given time.
+// Returns pointer to sensordata (no history) or history buffer (exact match),
+// or NULL if interpolation performed (writes to result).
+// interp: 0=zero-order-hold, 1=linear, 2=cubic spline.
+MJAPI const mjtNum* mj_readSensor(const mjModel* m, const mjData* d, int id, mjtNum time,
+                                  mjtNum* result, int interp);
+
+// Initialize history buffer for actuator; if times is NULL, uses existing buffer timestamps.
+// Nullable: times
+MJAPI void mj_initCtrlHistory(const mjModel* m, mjData* d, int id,
+                              const mjtNum* times, const mjtNum* values);
+
+// Initialize history buffer for sensor; if times is NULL, uses existing buffer timestamps.
+// phase sets the user slot (last computation time for interval sensors).
+// Nullable: times
+MJAPI void mj_initSensorHistory(const mjModel* m, mjData* d, int id,
+                                const mjtNum* times, const mjtNum* values, mjtNum phase);
+
 // Copy current state to the k-th model keyframe.
 MJAPI void mj_setKeyframe(mjModel* m, const mjData* d, int k);
 
@@ -626,39 +656,45 @@ MJAPI const char* mj_versionString(void);
 
 //---------------------------------- Ray casting ---------------------------------------------------
 
-// Intersect multiple rays emanating from a single point.
-// Similar semantics to mj_ray, but vec is an array of (nray x 3) directions.
-// Nullable: geomgroup
-MJAPI void mj_multiRay(const mjModel* m, mjData* d, const mjtNum pnt[3], const mjtNum* vec,
-                       const mjtByte* geomgroup, mjtByte flg_static, int bodyexclude,
-                       int* geomid, mjtNum* dist, int nray, mjtNum cutoff);
-
 // Intersect ray (pnt+x*vec, x>=0) with visible geoms, except geoms in bodyexclude.
-// Return distance (x) to nearest surface, or -1 if no intersection and output geomid.
+// Return distance (x) to nearest surface, or -1 if no intersection.
 // geomgroup, flg_static are as in mjvOption; geomgroup==NULL skips group exclusion.
-// Nullable: geomgroup, geomid
+// Nullable: geomgroup, geomid, normal
 MJAPI mjtNum mj_ray(const mjModel* m, const mjData* d, const mjtNum pnt[3], const mjtNum vec[3],
                     const mjtByte* geomgroup, mjtByte flg_static, int bodyexclude,
-                    int geomid[1]);
+                    int geomid[1], mjtNum normal[3]);
+
+// Intersect multiple rays emanating from a single point, compute normals if given.
+// Similar semantics to mj_ray, but vec, normal and dist are arrays.
+// Geoms further than cutoff are ignored.
+// Nullable: geomgroup, geomid, normal
+MJAPI void mj_multiRay(const mjModel* m, mjData* d, const mjtNum pnt[3], const mjtNum* vec,
+                       const mjtByte* geomgroup, mjtByte flg_static, int bodyexclude,
+                       int* geomid, mjtNum* dist, mjtNum* normal, int nray, mjtNum cutoff);
 
 // Intersect ray with hfield; return nearest distance or -1 if no intersection.
+// Nullable: normal
 MJAPI mjtNum mj_rayHfield(const mjModel* m, const mjData* d, int geomid,
-                          const mjtNum pnt[3], const mjtNum vec[3]);
+                          const mjtNum pnt[3], const mjtNum vec[3], mjtNum normal[3]);
 
 // Intersect ray with mesh; return nearest distance or -1 if no intersection.
+// Nullable: normal
 MJAPI mjtNum mj_rayMesh(const mjModel* m, const mjData* d, int geomid,
-                        const mjtNum pnt[3], const mjtNum vec[3]);
+                        const mjtNum pnt[3], const mjtNum vec[3], mjtNum normal[3]);
 
 // Intersect ray with pure geom; return nearest distance or -1 if no intersection.
+// Nullable: normal
 MJAPI mjtNum mju_rayGeom(const mjtNum pos[3], const mjtNum mat[9], const mjtNum size[3],
-                         const mjtNum pnt[3], const mjtNum vec[3], int geomtype);
+                         const mjtNum pnt[3], const mjtNum vec[3], int geomtype,
+                         mjtNum normal[3]);
 
 // Intersect ray with flex; return nearest distance or -1 if no intersection,
-// and also output nearest vertex id.
-// Nullable: vertid
-MJAPI mjtNum mju_rayFlex(const mjModel* m, const mjData* d, int flex_layer, mjtByte flg_vert,
-                         mjtByte flg_edge, mjtByte flg_face, mjtByte flg_skin, int flexid,
-                         const mjtNum pnt[3], const mjtNum vec[3], int vertid[1]);
+// and also output nearest vertex id and surface normal.
+// Nullable: vertid, normal
+MJAPI mjtNum mj_rayFlex(const mjModel* m, const mjData* d, int flex_layer,
+                        mjtByte flg_vert, mjtByte flg_edge, mjtByte flg_face,
+                        mjtByte flg_skin, int flexid, const mjtNum pnt[3],
+                        const mjtNum vec[3], int vertid[1], mjtNum normal[3]);
 
 // Intersect ray with skin; return nearest distance or -1 if no intersection,
 // and also output nearest vertex id.
@@ -1485,6 +1521,36 @@ MJAPI void mjp_defaultDecoder(mjpDecoder* decoder);
 // Return the resource provider with the prefix that matches against the resource name.
 // If no match, return NULL.
 MJAPI const mjpDecoder* mjp_findDecoder(const mjResource* resource, const char* content_type);
+
+
+//---------------------------------- Resources -----------------------------------------------------
+
+// Open a resource; if the name doesn't have a prefix matching a registered resource provider,
+// then the OS filesystem is used.
+// Nullable: dir, vfs, error
+MJAPI mjResource* mju_openResource(const char* dir, const char* name,
+                                   const mjVFS* vfs, char* error, size_t nerror);
+
+// Close a resource; no-op if resource is NULL.
+MJAPI void mju_closeResource(mjResource* resource);
+
+// Set buffer to bytes read from the resource and return number of bytes in buffer;
+// return negative value if error.
+MJAPI int mju_readResource(mjResource* resource, const void** buffer);
+
+// For a resource with a name partitioned as {dir}{filename}, get the dir and ndir pointers.
+MJAPI void mju_getResourceDir(mjResource* resource, const char** dir, int* ndir);
+
+// Compare resource timestamp to provided timestamp.
+// Return 0 if timestamps match, >0 if resource is newer, <0 if resource is older.
+MJAPI int mju_isModifiedResource(const mjResource* resource, const char* timestamp);
+
+// Find the decoder for a resource and return the decoded spec.
+// The caller takes ownership of the spec and is responsible for cleaning it up.
+// Nullable: vfs
+MJAPI mjSpec* mju_decodeResource(mjResource* resource, const char* content_type,
+                                 const mjVFS* vfs);
+
 
 //---------------------------------- Threads -------------------------------------------------------
 
