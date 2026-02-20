@@ -9,15 +9,12 @@ ROOT_DIR="$(git rev-parse --show-toplevel)"
 
 cd ${ROOT_DIR}
 
-if [ ! -d "${ROOT_DIR}/install" ]; then
-    mkdir install
-fi
-
 SHOW_HELP=false
 build_filament=OFF
 build_with_vulkan=OFF
 build_studio=OFF
 build_simulate=ON
+install_dir=""
 njobs=4
 
 while [[ $# -gt 0 ]]; do
@@ -28,6 +25,7 @@ while [[ $# -gt 0 ]]; do
         --vulkan) build_with_vulkan=ON; shift ;;
         --studio) build_studio=ON; shift ;;
         --njobs) njobs="$2"; shift 2 ;;
+        --install-dir) install_dir="$2"; shift 2 ;;
         *) echo "Unkown option: $1"; exit 1 ;;
     esac
 done
@@ -36,6 +34,12 @@ if [[ "${build_filament}" == "ON" ]]; then
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
     build_simulate=OFF
+fi
+
+[[ -n $install_dir ]] && USER_INSTALL_DIR="${install_dir}" || USER_INSTALL_DIR="${ROOT_DIR}/install"
+
+if [ ! -d "${USER_INSTALL_DIR}" ]; then
+    mkdir -p $USER_INSTALL_DIR
 fi
 
 echo "Configuring ..."
@@ -51,7 +55,7 @@ CMAKE_CONFIG_ARGS=(
     "-DMUJOCO_USE_FILAMENT=${build_filament}"
     "-DMUJOCO_USE_FILAMENT_VULKAN=${build_with_vulkan}"
     "-DMUJOCO_BUILD_STUDIO=${build_studio}"
-    "-DCMAKE_INSTALL_PREFIX=install"
+    "-DCMAKE_INSTALL_PREFIX=${USER_INSTALL_DIR}"
     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
     "-DCMAKE_INSTALL_LIBDIR=lib"
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
@@ -74,15 +78,15 @@ cmake --install build
 
 echo "Copy plugins to install directory"
 
-mkdir -p install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libactuator.* ${ROOT_DIR}/install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libelasticity.* ${ROOT_DIR}/install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libsensor.* ${ROOT_DIR}/install/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/libsdf_plugin.* ${ROOT_DIR}/install/mujoco_plugin
+mkdir -p ${USER_INSTALL_DIR}/mujoco_plugin
+cp ${ROOT_DIR}/build/lib/libactuator.* ${USER_INSTALL_DIR}/mujoco_plugin
+cp ${ROOT_DIR}/build/lib/libelasticity.* ${USER_INSTALL_DIR}/mujoco_plugin
+cp ${ROOT_DIR}/build/lib/libsensor.* ${USER_INSTALL_DIR}/mujoco_plugin
+cp ${ROOT_DIR}/build/lib/libsdf_plugin.* ${USER_INSTALL_DIR}/mujoco_plugin
 
 if [[ "${build_filament}" == "ON" ]]; then
     echo "Copy filament assets to install directory"
-    mkdir -p install/filament/assets
-    cp ${ROOT_DIR}/build/bin/assets/*.filamat ${ROOT_DIR}/install/filament/assets
-    cp ${ROOT_DIR}/build/bin/assets/*.ktx ${ROOT_DIR}/install/filament/assets
+    mkdir -p ${USER_INSTALL_DIR}/filament/assets
+    cp ${ROOT_DIR}/build/bin/assets/*.filamat ${USER_INSTALL_DIR}/filament/assets
+    cp ${ROOT_DIR}/build/bin/assets/*.ktx ${USER_INSTALL_DIR}/filament/assets
 fi
