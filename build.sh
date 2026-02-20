@@ -54,6 +54,8 @@ CMAKE_CONFIG_ARGS=(
     "-DMUJOCO_TEST_AI2=ON"
     "-DMUJOCO_USE_FILAMENT=${build_filament}"
     "-DMUJOCO_USE_FILAMENT_VULKAN=${build_with_vulkan}"
+    "-DFILAMENT_SUPPORTS_VULKAN=${build_with_vulkan}"
+    "-DFILAMENT_SUPPORTS_METAL=OFF"
     "-DMUJOCO_BUILD_STUDIO=${build_studio}"
     "-DCMAKE_INSTALL_PREFIX=${USER_INSTALL_DIR}"
     "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
@@ -89,4 +91,5 @@ if [[ "${build_filament}" == "ON" ]]; then
     mkdir -p ${USER_INSTALL_DIR}/filament/assets
     cp ${ROOT_DIR}/build/bin/assets/*.filamat ${USER_INSTALL_DIR}/filament/assets
     cp ${ROOT_DIR}/build/bin/assets/*.ktx ${USER_INSTALL_DIR}/filament/assets
+    cp ${ROOT_DIR}/build/bin/assets/*.ttf ${USER_INSTALL_DIR}/filament/assets
 fi

@@ -87,6 +87,7 @@ if [[ "${build_filament}" == "ON" ]]; then
     mkdir -p install/filament/assets
     cp ${ROOT_DIR}/build/bin/assets/*.filamat ${ROOT_DIR}/install/filament/assets
     cp ${ROOT_DIR}/build/bin/assets/*.ktx ${ROOT_DIR}/install/filament/assets
+    cp ${ROOT_DIR}/build/bin/assets/*.ttf ${ROOT_DIR}/install/filament/assets
 fi
 
 echo "Make source distribution"

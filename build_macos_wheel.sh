@@ -48,7 +48,7 @@ CMAKE_CONFIG_ARGS=(
     "-DMUJOCO_BUILD_SIMULATE=${build_simulate}"
     "-DMUJOCO_BUILD_TESTS=OFF"
     "-DMUJOCO_WITH_USD=OFF"
-    "-DMUJOCO_TEST_AI2=OFF"
+    "-DMUJOCO_TEST_AI2=ON"
     "-DMUJOCO_USE_FILAMENT=${build_filament}"
     "-DMUJOCO_USE_FILAMENT_VULKAN=OFF"
     "-DFILAMENT_SUPPORTS_VULKAN=OFF"
@@ -86,6 +86,7 @@ if [[ "${build_filament}" == "ON" ]]; then
     mkdir -p install/filament/assets
     cp ${ROOT_DIR}/build/bin/assets/*.filamat ${ROOT_DIR}/install/filament/assets
     cp ${ROOT_DIR}/build/bin/assets/*.ktx ${ROOT_DIR}/install/filament/assets
+    cp ${ROOT_DIR}/build/bin/assets/*.ttf ${ROOT_DIR}/install/filament/assets
 fi
 
 echo "Make source distribution"
