@@ -40,36 +40,29 @@ _MODELFILE = flags.DEFINE_string(
     'humanoid/humanoid.xml',
     'path to model',
 )
-_NWORLD = flags.DEFINE_integer(
-    'nworld', 4, 'number of worlds to render'
-)
+_NWORLD = flags.DEFINE_integer('nworld', 4, 'number of worlds to render')
 _WIDTH = flags.DEFINE_integer('width', 512, 'image width')
 _HEIGHT = flags.DEFINE_integer('height', 512, 'image height')
-_CAMERA_ID = flags.DEFINE_integer(
-    'camera_id', 0, 'camera id to visualize'
-)
+_CAMERA_ID = flags.DEFINE_integer('camera_id', 0, 'camera id to visualize')
 _OUTPUT_DIR = flags.DEFINE_string(
     'output_dir', '/tmp/visualize_render', 'output directory'
 )
 _RANDOMIZE_QPOS = flags.DEFINE_boolean(
     'randomize_qpos', False, 'randomize initial qpos'
 )
-_USE_TEXTURES = flags.DEFINE_boolean(
-    'use_textures', True, 'enable textures'
-)
-_USE_SHADOWS = flags.DEFINE_boolean(
-    'use_shadows', True, 'enable shadows'
-)
+_USE_TEXTURES = flags.DEFINE_boolean('use_textures', True, 'enable textures')
+_USE_SHADOWS = flags.DEFINE_boolean('use_shadows', True, 'enable shadows')
 _WP_KERNEL_CACHE_DIR = flags.DEFINE_string(
     'wp_kernel_cache_dir',
     '/tmp/wp_kernel_cache_dir_visualize_render',
     'warp kernel cache directory',
 )
+_PMAP = flags.DEFINE_boolean(
+    'pmap', False, 'also render with pmap across GPUs and compare'
+)
 
 _COMPILER_OPTIONS = {'xla_gpu_graph_min_graph_size': 1}
-jax_jit = functools.partial(
-    jax.jit, compiler_options=_COMPILER_OPTIONS
-)
+jax_jit = functools.partial(jax.jit, compiler_options=_COMPILER_OPTIONS)
 
 
 def _save_single(rgb, out_path):
@@ -85,14 +78,10 @@ def _save_tiled(rgb, out_path):
   nworld, height, width, _ = rgb.shape
   cols = int(np.ceil(np.sqrt(nworld)))
   rows = int(np.ceil(nworld / cols))
-  canvas = np.zeros(
-      (rows * height, cols * width, 3), dtype=np.uint8
-  )
+  canvas = np.zeros((rows * height, cols * width, 3), dtype=np.uint8)
 
   for w in range(nworld):
-    img_uint8 = (np.asarray(rgb[w]) * 255).astype(
-        np.uint8
-    )
+    img_uint8 = (np.asarray(rgb[w]) * 255).astype(np.uint8)
     r, c = w // cols, w % cols
     y0, y1 = r * height, (r + 1) * height
     x0, x1 = c * width, (c + 1) * width
@@ -121,6 +110,7 @@ def _main(_: Sequence[str]):
   print(f'  camera_id   : {_CAMERA_ID.value}')
   print(f'  use_textures: {_USE_TEXTURES.value}')
   print(f'  use_shadows : {_USE_SHADOWS.value}')
+  print(f'  pmap        : {_PMAP.value}')
   print(f'  output_dir  : {_OUTPUT_DIR.value}\n')
 
   mx = mjx.put_model(m, impl='warp')
@@ -136,18 +126,14 @@ def _main(_: Sequence[str]):
     if _RANDOMIZE_QPOS.value:
       # TODO(robotics-team): consider integrating velocity if there are free
       # joints.
-      qpos = qpos0 + jax.random.uniform(
-          rng, (m.nq,), minval=-0.2, maxval=0.05
-      )
+      qpos = qpos0 + jax.random.uniform(rng, (m.nq,), minval=-0.2, maxval=0.05)
     return dx.replace(qpos=qpos)
 
   print('initializing data...')
   dx_batch = jax_jit(init)(worldids)
 
   print('running forward...')
-  dx_batch = jax_jit(
-      jax.vmap(forward.forward, in_axes=(None, 0))
-  )(mx, dx_batch)
+  dx_batch = jax_jit(jax.vmap(forward.forward, in_axes=(None, 0)))(mx, dx_batch)
 
   print('creating render context...')
   rc = io.create_render_context(
@@ -161,31 +147,26 @@ def _main(_: Sequence[str]):
       enabled_geom_groups=[0, 1, 2],
   )
 
-  print('rendering...')
-  dx_batch = jax_jit(
-      jax.vmap(
-          bvh.refit_bvh, in_axes=(None, 0, None)
-      )
-  )(mx, dx_batch, rc)
+  dx_batch = jax_jit(jax.vmap(bvh.refit_bvh, in_axes=(None, 0, None)))(
+      mx, dx_batch, rc
+  )
 
-  out_batch = jax_jit(
-      jax.vmap(
-          render.render, in_axes=(None, 0, None)
-      )
-  )(mx, dx_batch, rc)
+  out_batch = jax_jit(jax.vmap(render.render, in_axes=(None, 0, None)))(
+      mx, dx_batch, rc
+  )
 
   rgb_packed = out_batch[0]
   depth_packed = out_batch[1]
   print(f'  rgb shape:   {rgb_packed.shape}')
   print(f'  depth shape: {depth_packed.shape}\n')
 
-  rgb = jax.vmap(
-      render_util.get_rgb, in_axes=(None, 0, None)
-  )(rc, rgb_packed, _CAMERA_ID.value)
+  rgb = jax.vmap(render_util.get_rgb, in_axes=(None, None, 0))(
+      rc, _CAMERA_ID.value, rgb_packed
+  )
 
-  depth = jax.vmap(
-      render_util.get_depth, in_axes=(None, 0, None, None)
-  )(rc, depth_packed, _CAMERA_ID.value, 10.0)
+  depth = jax.vmap(render_util.get_depth, in_axes=(None, None, 0, None))(
+      rc, _CAMERA_ID.value, depth_packed, 10.0
+  )
 
   single_path = os.path.join(
       _OUTPUT_DIR.value, f'camera_{_CAMERA_ID.value}.png'
@@ -208,6 +189,62 @@ def _main(_: Sequence[str]):
         _OUTPUT_DIR.value, f'depth_tiled_{_CAMERA_ID.value}.png'
     )
     _save_tiled(depth_rgb, depth_tiled_path)
+
+  if _PMAP.value:
+    ndevices = jax.local_device_count()
+    nworld = _NWORLD.value
+    nworld_per_device = nworld // ndevices
+    assert nworld >= ndevices and nworld % ndevices == 0, (
+        f'--pmap requires nworld ({nworld}) divisible by device count'
+        f' ({ndevices})'
+    )
+    print(f'\nrendering (pmap across {ndevices} devices)...')
+
+    device_strs = [f'cuda:{i}' for i in range(ndevices)]
+
+    pmap_rc = io.create_render_context(
+        mjm=m,
+        nworld=nworld_per_device,
+        devices=device_strs,
+        cam_res=(_WIDTH.value, _HEIGHT.value),
+        use_textures=_USE_TEXTURES.value,
+        use_shadows=_USE_SHADOWS.value,
+        render_rgb=True,
+        render_depth=True,
+        enabled_geom_groups=[0, 1, 2],
+    )
+
+    devices = jax.local_devices()[:ndevices]
+    mesh = jax.sharding.Mesh(np.array(devices), axis_names=('i',))
+    P = jax.sharding.PartitionSpec
+    sharded = jax.sharding.NamedSharding(mesh, P('i'))
+
+    def safe_shard(x, sharding):
+      # Go through CPU to avoid P2P DMA issues on certain machines.
+      x_cpu = jax.device_put(x, jax.devices('cpu')[0])
+      if x_cpu.ndim > 0 and x_cpu.shape[0] == nworld:
+        reshaped = x_cpu.reshape(ndevices, nworld_per_device, *x_cpu.shape[1:])
+      else:
+        reshaped = jp.stack([x_cpu] * ndevices)
+      return jax.device_put(reshaped, sharding)
+
+    dx_pmap = jax.tree.map(lambda x: safe_shard(x, sharded), dx_batch)
+    mx_pmap = jax.tree.map(lambda x: safe_shard(x, sharded), mx)
+
+    def inner(mx, dx):
+      dx = bvh.refit_bvh(mx, dx, pmap_rc)
+      out = render.render(mx, dx, pmap_rc)
+      return render_util.get_rgb(pmap_rc, _CAMERA_ID.value, out[0])
+
+    inner = jax.vmap(inner, in_axes=(None, 0))
+    out = jax.pmap(inner)(mx_pmap, dx_pmap)
+
+    pmap_rgb = jax.device_put(out, jax.devices('cpu')[0]).reshape(-1, *out.shape[2:])
+
+    pmap_tiled_path = os.path.join(
+        _OUTPUT_DIR.value, f'pmap_tiled_{_CAMERA_ID.value}.png'
+    )
+    _save_tiled(pmap_rgb, pmap_tiled_path)
 
   print('\ndone.')
 

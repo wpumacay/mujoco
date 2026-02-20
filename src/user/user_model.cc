@@ -3231,9 +3231,45 @@ int mjCModel::CountNJten(const mjModel* m) {
   int nv = m->nv;
   int ntendon = m->ntendon;
 
-  // conservative upper bound: each tendon can have at most nv non-zeros
-  // TODO(taylorhowell): compute tighter bound
-  int count = ntendon * nv;
+  std::vector<bool> dof_bitmap(nv, false);
+  int count = 0;
+  for (int i = 0; i < ntendon; i++) {
+    int adr = m->tendon_adr[i];
+    int num = m->tendon_num[i];
+
+    if (m->wrap_type[adr] == mjWRAP_JOINT) {
+      count += num;
+      continue;
+    }
+
+    std::fill(dof_bitmap.begin(), dof_bitmap.end(), false);
+    for (int j = 0; j < num; j++) {
+      int type = m->wrap_type[adr + j];
+      int bodyid = -1;
+      if (type == mjWRAP_SITE) {
+        bodyid = m->site_bodyid[m->wrap_objid[adr + j]];
+      } else if (type == mjWRAP_SPHERE || type == mjWRAP_CYLINDER) {
+        bodyid = m->geom_bodyid[m->wrap_objid[adr + j]];
+      }
+      if (bodyid > 0) {
+        int bid = bodyid;
+        while (bid > 0) {
+          int bdofadr = m->body_dofadr[bid];
+          int bdofnum = m->body_dofnum[bid];
+          for (int k = 0; k < bdofnum; k++) {
+            dof_bitmap[bdofadr + k] = true;
+          }
+          bid = m->body_parentid[bid];
+        }
+      }
+    }
+
+    // only count unique dofs
+    for (int j = 0; j < nv; j++) {
+      count += dof_bitmap[j];
+    }
+  }
+
   return count;
 }
 
@@ -4190,6 +4226,8 @@ void mjCModel::FuseReindex(mjCBody* body) {
   makelistid(joints_, body->joints);
   makelistid(geoms_, body->geoms);
   makelistid(sites_, body->sites);
+  makelistid(cameras_, body->cameras);
+  makelistid(lights_, body->lights);
 
   // process children recursively
   for (int i=0; i < body->bodies.size(); i++) {
@@ -4317,10 +4355,25 @@ void mjCModel::FuseStatic(void) {
       mju_error("Internal error: FuseStatic: body not found");
     }
 
-    //------------- assign geoms and sites to parent, change frames
+    //------------- assign geoms, sites, cameras, lights to parent, change frames
 
     ReassignChild(par->geoms, body->geoms, par, body);
     ReassignChild(par->sites, body->sites, par, body);
+    ReassignChild(par->cameras, body->cameras, par, body);
+
+    // lights have dir instead of quat, so handle separately
+    for (int j=0; j < body->lights.size(); j++) {
+      body->lights[j]->body = par;
+      par->lights.push_back(body->lights[j]);
+
+      // transform pos into parent frame
+      double qunit[4] = {1, 0, 0, 0};
+      changeframe(body->lights[j]->pos, qunit, body->pos, body->quat);
+
+      // rotate dir into parent frame
+      mjuu_rotVecQuat(body->lights[j]->dir, body->lights[j]->dir, body->quat);
+    }
+    body->lights.clear();
 
     //------------- remove from global body list, reduce global counts
 
@@ -4352,6 +4405,8 @@ void mjCModel::FuseStatic(void) {
     joints_.clear();
     geoms_.clear();
     sites_.clear();
+    cameras_.clear();
+    lights_.clear();
     FuseReindex(bodies_[0]);
 
     // recompute parent contype, conaffinity, and margin

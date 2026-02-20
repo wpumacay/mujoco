@@ -67,6 +67,13 @@ target_sources(${MUJOCO_PLATFORM_TARGET_NAME}
         window.h
 )
 
+if(NOT WIN32)
+  target_sources(${MUJOCO_PLATFORM_TARGET_NAME}
+      PUBLIC
+          object_launcher_plugin.cc
+  )
+endif()
+
 if(APPLE)
     set_source_files_properties(window_osx.mm PROPERTIES
         COMPILE_FLAGS "-x objective-c++")
@@ -78,7 +85,7 @@ elseif(UNIX AND NOT APPLE)
     target_sources(${MUJOCO_PLATFORM_TARGET_NAME} PUBLIC
         file_dialog_zenity.cc
     )
-elseif(WINDOWS)
+elseif(WIN32)
     target_sources(${MUJOCO_PLATFORM_TARGET_NAME} PUBLIC
         file_dialog_win.cc
     )

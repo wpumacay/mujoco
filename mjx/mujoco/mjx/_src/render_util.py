@@ -23,15 +23,15 @@ import mujoco.mjx.warp as mjxw
 
 def get_rgb(
     rc: Any,
-    rgb_data: jax.Array,
     cam_id: int,
+    rgb_data: jax.Array,
 ) -> jax.Array:
   """Unpack uint32 ABGR pixel data into float32 RGB.
 
   Args:
     rc: The RenderContext handle.
-    rgb_data: Packed render output, shape (total_pixels,) as uint32.
     cam_id: Camera index to extract.
+    rgb_data: Packed render output, shape (total_pixels,) as uint32.
 
   Returns:
     Float32 RGB array with shape (H, W, 3), values in [0, 1].
@@ -44,7 +44,7 @@ def get_rgb(
   else:
     raise RuntimeError('Warp not installed.')
 
-  warp_rc = mjxw_render._MJX_RENDER_CONTEXT_BUFFERS[rc.key]
+  warp_rc = mjxw_render._MJX_RENDER_CONTEXT_BUFFERS[(rc.key, None)]
   rgb_adr = int(warp_rc.rgb_adr.numpy()[cam_id])
   width = int(warp_rc.cam_res.numpy()[cam_id][0])
   height = int(warp_rc.cam_res.numpy()[cam_id][1])
@@ -62,16 +62,16 @@ def get_rgb(
 
 def get_depth(
     rc: Any,
-    depth_data: jax.Array,
     cam_id: int,
+    depth_data: jax.Array,
     depth_scale: float,
 ) -> jax.Array:
   """Extract and normalize depth data for a camera.
 
   Args:
     rc: The RenderContext handle.
-    depth_data: Raw depth output, shape (total_pixels,) as float32.
     cam_id: Camera index to extract.
+    depth_data: Raw depth output, shape (total_pixels,) as float32.
     depth_scale: Scale factor for normalizing depth values.
 
   Returns:
@@ -84,7 +84,7 @@ def get_depth(
     import mujoco.mjx.warp.render as mjxw_render  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
   else:
     raise RuntimeError('Warp not installed.')
-  warp_rc = mjxw_render._MJX_RENDER_CONTEXT_BUFFERS[rc.key]
+  warp_rc = mjxw_render._MJX_RENDER_CONTEXT_BUFFERS[(rc.key, None)]
   depth_adr = int(warp_rc.depth_adr.numpy()[cam_id])
   width = int(warp_rc.cam_res.numpy()[cam_id][0])
   height = int(warp_rc.cam_res.numpy()[cam_id][1])
