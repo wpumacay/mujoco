@@ -4,8 +4,6 @@ set -e
 
 build_type="Release"
 
-py_bin="/opt/python/cp310-cp310/bin/python"
-
 echo "Going back to the root of the project"
 ROOT_DIR="$(pwd)"
 
@@ -20,6 +18,7 @@ build_filament=OFF
 build_with_vulkan=OFF
 build_studio=OFF
 build_simulate=ON
+py_version="py310"
 njobs=4
 
 while [[ $# -gt 0 ]]; do
@@ -29,6 +28,7 @@ while [[ $# -gt 0 ]]; do
         --filament) build_filament=ON; shift ;;
         --vulkan) build_with_vulkan=ON; shift ;;
         --studio) build_studio=ON; shift ;;
+        --py-version) py_version="$2"; shift 2 ;;
         --njobs) njobs="$2"; shift 2 ;;
         *) echo "Unkown option: $1"; exit 1 ;;
     esac
@@ -40,6 +40,15 @@ if [[ "${build_filament}" == "ON" ]]; then
     build_simulate=OFF
     build_studio=ON
 fi
+
+py_bin="/opt/python/cp310-cp310/bin/python"
+case $py_version in
+    py310) py_bin="/opt/python/cp310-cp310/bin/python" ;;
+    py311) py_bin="/opt/python/cp311-cp311/bin/python" ;;
+    py312) py_bin="/opt/python/cp312-cp312/bin/python" ;;
+    py313) py_bin="/opt/python/cp313-cp313/bin/python" ;;
+    py314) py_bin="/opt/python/cp314-cp314/bin/python" ;;
+esac
 
 echo "Configuring ..."
 CMAKE_CONFIG_ARGS=(
@@ -92,7 +101,7 @@ fi
 
 echo "Make source distribution"
 
-bash ${ROOT_DIR}/python/make_sdist_manylinux.sh
+bash ${ROOT_DIR}/python/make_sdist_manylinux.sh --py-version $py_version
 
 echo "Build python wheel"
 

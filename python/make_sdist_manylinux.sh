@@ -13,7 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+py_version="py310"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --py-version) py_version="$2"; shift 2 ;;
+        *) echo "Uknown option: $1"; exit 1 ;;
+    esac
+done
+
 py_bin="/opt/python/cp310-cp310/bin/python"
+case $py_version in
+    py310) py_bin="/opt/python/cp310-cp310/bin/python" ;;
+    py311) py_bin="/opt/python/cp311-cp311/bin/python" ;;
+    py312) py_bin="/opt/python/cp312-cp312/bin/python" ;;
+    py313) py_bin="/opt/python/cp313-cp313/bin/python" ;;
+    py314) py_bin="/opt/python/cp314-cp314/bin/python" ;;
+esac
 
 # Figure out the path to this script (https://stackoverflow.com/a/246128).
 package_dir="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
