@@ -88,6 +88,7 @@ FetchContent_MakeAvailable(cli11)
 
 set(TESTS_AI2_LIST
     ${CMAKE_CURRENT_SOURCE_DIR}/test_segmentation.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_render_filament.cc
 )
 
 foreach(ex_filepath IN LISTS TESTS_AI2_LIST)

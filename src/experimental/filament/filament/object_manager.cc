@@ -16,6 +16,8 @@
 
 #include <array>
 #include <cstdint>
+#include <cstdlib>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -44,7 +46,21 @@ struct Asset {
   explicit Asset(std::string_view filename) {
     std::string path = "filament:" + std::string(filename);
 
-    resource = mju_openResource("", path.c_str(), nullptr, nullptr, 0);
+    std::array<char, 1000> error;
+
+    auto envvar_install_dir = std::getenv("MUJOCO_INSTALL_DIR");
+    if (!envvar_install_dir) {
+      resource = mju_openResource("", path.c_str(), nullptr, error.data(), error.size());
+    }
+    else {
+      std::string dir_path = std::string(envvar_install_dir) + "filament/assets/";
+      resource = mju_openResource(dir_path.c_str(), std::string(filename).c_str(), nullptr, error.data(), error.size());
+    }
+
+    if (!resource) {
+      mju_error("Error while opening resource > %s", error.data());
+      throw std::runtime_error("Got an error while loading a file when loading filament materials.");
+    }
     size = mju_readResource(resource, const_cast<const void**>(&payload));
   }
 
