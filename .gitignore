@@ -46,3 +46,6 @@ wasm/**/dist/
 /filament
 compile_commands.json
 /*.png
+
+/assets
+
