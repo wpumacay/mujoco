@@ -29,7 +29,7 @@ set(MSVC_INCREMENTAL_DEFAULT ON)
 
 project(
   mujoco
-  VERSION 3.5.1
+  VERSION 3.7.0
   DESCRIPTION "MuJoCo Physics Simulator"
   HOMEPAGE_URL "https://mujoco.org"
 )
@@ -50,6 +50,8 @@ if(NOT EMSCRIPTEN)
   option(MUJOCO_USE_FILAMENT_VULKAN "Use vulkan backend for filament rendering" OFF)
   option(MUJOCO_USE_DEFAULT_LD "Use ld for linking, seems ld.gold and others don't work well in some systems" ON)
   option(MUJOCO_TEST_AI2 "Build the custom tests we made during dev at ai2" ON)
+  # Allows filament renderer to be used with mjr API; disables src/render to prevent conflicts.
+  option(MUJOCO_USE_FILAMENT_MJR_COMPAT "Use filament mjr compatibility layer" OFF)
 endif()
 
 if(EMSCRIPTEN)
@@ -111,21 +113,19 @@ if(NOT EMSCRIPTEN)
   add_subdirectory(plugin/sensor)
   add_subdirectory(plugin/sdf)
 endif()
+add_subdirectory(plugin/obj_decoder)
+add_subdirectory(plugin/stl_decoder)
 add_subdirectory(src/engine)
 add_subdirectory(src/user)
 add_subdirectory(src/xml)
 add_subdirectory(src/thread)
+if(NOT EMSCRIPTEN AND NOT MUJOCO_USE_FILAMENT_MJR_COMPAT)
+  add_subdirectory(src/render/classic)
+  add_subdirectory(src/ui)
+endif()
 
 if(MUJOCO_USE_FILAMENT AND NOT EMSCRIPTEN)
-  # Note that, by default, the "src/render" and "src/ui" code is added directly
-  # into the "mujoco" target. However, "mujoco::filament" is a separate,
-  # explicit target. Therefore, if you want to use MuJoCo with Filament, you
-  # will need to explicitly add the "mujoco::filament" target as a link
-  # dependency in your project.
   add_subdirectory(src/experimental/filament)
-elseif(NOT EMSCRIPTEN)
-  add_subdirectory(src/render)
-  add_subdirectory(src/ui)
 endif()
 
 if(EMSCRIPTEN)

@@ -3626,7 +3626,7 @@ FUNCTIONS: Mapping[str, FunctionDecl] = dict([
              FunctionParameterDecl(
                  name='d',
                  type=PointerType(
-                     inner_type=ValueType(name='mjData', is_const=True),
+                     inner_type=ValueType(name='mjData'),
                  ),
              ),
              FunctionParameterDecl(
@@ -10822,6 +10822,22 @@ FUNCTIONS: Mapping[str, FunctionDecl] = dict([
              ),
          ),
          doc='Get spec from body.',
+     )),
+    ('mjs_getCompiler',
+     FunctionDecl(
+         name='mjs_getCompiler',
+         return_type=PointerType(
+             inner_type=ValueType(name='mjsCompiler'),
+         ),
+         parameters=(
+             FunctionParameterDecl(
+                 name='element',
+                 type=PointerType(
+                     inner_type=ValueType(name='mjsElement'),
+                 ),
+             ),
+         ),
+         doc="Get compiler associated with element's origin spec.",
      )),
     ('mjs_findSpec',
      FunctionDecl(

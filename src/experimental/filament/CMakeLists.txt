@@ -28,7 +28,6 @@ endif()
 
 target_sources(${MUJOCO_FILAMENT_TARGET_NAME}
     PUBLIC
-        stubs.cc
         render_context_filament.h
         render_context_filament.cc
         filament/buffer_util.cc
@@ -65,6 +64,13 @@ target_sources(${MUJOCO_FILAMENT_TARGET_NAME}
         filament/vertex_util.cc
         filament/vertex_util.h
 )
+if(MUJOCO_USE_FILAMENT_MJR_COMPAT)
+    target_sources(${MUJOCO_FILAMENT_TARGET_NAME}
+        PUBLIC
+            mjr_compat.cc
+    )
+endif()
+
 target_include_directories(${MUJOCO_FILAMENT_TARGET_NAME}
     PUBLIC
         ${PROJECT_SOURCE_DIR}/include

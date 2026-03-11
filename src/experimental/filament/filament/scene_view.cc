@@ -132,6 +132,15 @@ SceneView::SceneView(filament::Engine* engine, ObjectManager* object_mgr)
   msaa.enabled = ReadElement(m, "filament.msaa.enabled", true);
   views_[kNormalIndex]->setMultiSampleAntiAliasingOptions(msaa);
 
+  default_shadow_map_size_ = ReadElement(
+      m, "filament.shadows.map_size", default_shadow_map_size_);
+  default_vsm_blur_width_ = ReadElement(
+      m, "filament.shadows.vsm_blur_width", default_vsm_blur_width_);
+
+  auto shadow_type = views_[kNormalIndex]->getShadowType();
+  shadow_type = ReadElement(m, "filament.shadows.type", shadow_type);
+  views_[kNormalIndex]->setShadowType(shadow_type);
+
   // Disable post processing for the depth and segmentation views to preserve
   // the values.
   views_[kDepthIndex]->setPostProcessingEnabled(false);
@@ -290,9 +299,12 @@ void SceneView::PrepareLights() {
       params.bulbradius = model->light_bulbradius[i];
       params.range = model->light_range[i];
       params.intensity = model->light_intensity[i];
+      params.shadow_map_size = default_shadow_map_size_;
+      params.vsm_blur_width = default_vsm_blur_width_;
       if (params.type == mjLIGHT_SPOT) {
         params.spot_cone_angle = model->light_cutoff[i];
       }
+
       auto light_obj = std::make_unique<Light>(object_mgr_, params);
 #ifndef __EMSCRIPTEN__
       // TODO(b/458045799): Re-enable when lights work on glinux and chromebook.

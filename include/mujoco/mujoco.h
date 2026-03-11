@@ -16,7 +16,7 @@
 #define MUJOCO_MUJOCO_H_
 
 // header version; should match the library version as returned by mj_version()
-#define mjVERSION_HEADER 3005001
+#define mjVERSION_HEADER 3007000
 
 // needed to define size_t, fabs and log10
 #include <stdlib.h>
@@ -609,8 +609,8 @@ MJAPI void mj_objectAcceleration(const mjModel* m, const mjData* d,
 
 // Return smallest signed distance between two geoms and optionally segment from geom1 to geom2.
 // Nullable: fromto
-MJAPI mjtNum mj_geomDistance(const mjModel* m, const mjData* d, int geom1, int geom2,
-                             mjtNum distmax, mjtNum fromto[6]);
+MJAPI mjtNum mj_geomDistance(const mjModel* m, mjData* d, int geom1, int geom2, mjtNum distmax,
+                             mjtNum fromto[6]);
 
 // Extract 6D force:torque given contact id, in the contact frame.
 MJAPI void mj_contactForce(const mjModel* m, const mjData* d, int id, mjtNum result[6]);
@@ -1733,6 +1733,9 @@ MJAPI int mjs_makeMesh(mjsMesh* mesh, mjtMeshBuiltin builtin, double* params, in
 
 // Get spec from body.
 MJAPI mjSpec* mjs_getSpec(mjsElement* element);
+
+// Get compiler associated with element's origin spec.
+MJAPI mjsCompiler* mjs_getCompiler(mjsElement* element);
 
 // Find spec (model asset) by name.
 MJAPI mjSpec* mjs_findSpec(mjSpec* spec, const char* name);

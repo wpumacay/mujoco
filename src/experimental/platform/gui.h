@@ -62,6 +62,19 @@ void SetupTheme(GuiTheme theme);
 // be used to place additional elements (e.g. floating charts).
 ImVec4 ConfigureDockingLayout();
 
+// UX for selecting the GUI theme.
+bool ThemeSelectGui(GuiTheme* theme);
+
+// UX for selecting the visualization label option.
+bool LabelSelectionGui(mjvOption* opts);
+
+// UX for selecting the visualization frame option.
+bool FrameSelectionGui(mjvOption* opts);
+
+// UX for selecting the camera.
+bool CameraSelectionGui(const mjModel* model, mjData* data, mjvCamera& camera,
+                        int& index);
+
 // UX for controlling the physics simulation parameters (e.g. integrator,
 // solver, etc.) in mjModel.
 void PhysicsGui(mjModel* model, float min_width);
@@ -115,14 +128,6 @@ void CountsGui(const mjModel* model, mjData* data);
 // UX for displaying basic simulation information. Note that the pause state and
 // FPS needs to be tracked by the caller and passed here to be displayed.
 void StatsGui(const mjModel* model, const mjData* data, bool paused, float fps);
-
-// UX for displaying properties of various mjSpec elements.
-void BodyPropertiesGui(const mjModel* model, const mjData* data,
-                       mjsElement* element, int id);
-void JointPropertiesGui(const mjModel* model, const mjData* data,
-                        mjsElement* element, int id);
-void SitePropertiesGui(const mjModel* model, const mjData* data,
-                       mjsElement* element, int id);
 
 }  // namespace mujoco::platform
 

@@ -1123,6 +1123,11 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  doc='number of tendons',
              ),
              StructFieldDecl(
+                 name='nJten',
+                 type=ValueType(name='mjtSize'),
+                 doc='number of non-zeros in sparse ten_J matrix',
+             ),
+             StructFieldDecl(
                  name='nwrap',
                  type=ValueType(name='mjtSize'),
                  doc='number of wrap objects in all tendon paths',
@@ -1241,11 +1246,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  name='nJmom',
                  type=ValueType(name='mjtSize'),
                  doc='number of non-zeros in sparse actuator_moment matrix',
-             ),
-             StructFieldDecl(
-                 name='nJten',
-                 type=ValueType(name='mjtSize'),
-                 doc='number of non-zeros in sparse ten_J matrix',
              ),
              StructFieldDecl(
                  name='ngravcomp',
@@ -2980,7 +2980,7 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  type=PointerType(
                      inner_type=ValueType(name='int'),
                  ),
-                 doc='0: none, 1: edges, 2: vertices',
+                 doc='0:none, 1:edges, 2:vertices, 3:strain',
                  array_extent=('nflex',),
              ),
              StructFieldDecl(
@@ -3926,6 +3926,30 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  ),
                  doc="first two trees along tendon's path",
                  array_extent=('ntendon', 2),
+             ),
+             StructFieldDecl(
+                 name='ten_J_rownnz',
+                 type=PointerType(
+                     inner_type=ValueType(name='int'),
+                 ),
+                 doc='number of non-zeros in Jacobian row',
+                 array_extent=('ntendon',),
+             ),
+             StructFieldDecl(
+                 name='ten_J_rowadr',
+                 type=PointerType(
+                     inner_type=ValueType(name='int'),
+                 ),
+                 doc='row start address in colind array',
+                 array_extent=('ntendon',),
+             ),
+             StructFieldDecl(
+                 name='ten_J_colind',
+                 type=PointerType(
+                     inner_type=ValueType(name='int'),
+                 ),
+                 doc='column indices in sparse Jacobian',
+                 array_extent=('nJten',),
              ),
              StructFieldDecl(
                  name='tendon_limited',
@@ -5811,30 +5835,6 @@ STRUCTS: Mapping[str, StructDecl] = dict([
                  ),
                  doc='number of wrap points in path',
                  array_extent=('ntendon',),
-             ),
-             StructFieldDecl(
-                 name='ten_J_rownnz',
-                 type=PointerType(
-                     inner_type=ValueType(name='int'),
-                 ),
-                 doc='number of non-zeros in Jacobian row',
-                 array_extent=('ntendon',),
-             ),
-             StructFieldDecl(
-                 name='ten_J_rowadr',
-                 type=PointerType(
-                     inner_type=ValueType(name='int'),
-                 ),
-                 doc='row start address in colind array',
-                 array_extent=('ntendon',),
-             ),
-             StructFieldDecl(
-                 name='ten_J_colind',
-                 type=PointerType(
-                     inner_type=ValueType(name='int'),
-                 ),
-                 doc='column indices in sparse Jacobian',
-                 array_extent=('nJten',),
              ),
              StructFieldDecl(
                  name='ten_J',
