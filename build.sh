@@ -52,6 +52,7 @@ CMAKE_CONFIG_ARGS=(
     "-DMUJOCO_BUILD_TESTS=OFF"
     "-DMUJOCO_WITH_USD=OFF"
     "-DMUJOCO_TEST_AI2=ON"
+    "-DMUJOCO_USE_FILAMENT_MJR_COMPAT=${build_filament}"
     "-DMUJOCO_USE_FILAMENT=${build_filament}"
     "-DMUJOCO_USE_FILAMENT_VULKAN=${build_with_vulkan}"
     "-DFILAMENT_SUPPORTS_VULKAN=${build_with_vulkan}"
