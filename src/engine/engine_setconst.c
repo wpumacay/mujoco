@@ -211,7 +211,9 @@ static void setFixed(mjModel* m, mjData* d) {
     }
 
     // tendon spans 2 trees and has no stiffness or damping: skip
-    if (treenum == 2 && m->tendon_stiffness[i] == 0 && m->tendon_damping[i] == 0) {
+    if (treenum == 2 &&
+        m->tendon_stiffness[i] == 0 && mju_isZero(m->tendon_stiffnesspoly+mjNPOLY*i, mjNPOLY) &&
+        m->tendon_damping[i] == 0   && mju_isZero(m->tendon_dampingpoly+mjNPOLY*i, mjNPOLY)) {
       continue;
     }
 
@@ -434,7 +436,7 @@ static void makeFlexSparse(mjModel* m, mjData* d) {
 
       // get sparsity
       int NV = mj_jacDifPair(m, d, chain, b1, b2, dummy_pos, dummy_pos, NULL,
-                             NULL, NULL, NULL, NULL, NULL, /*issparse=*/1);
+                             NULL, NULL, NULL, NULL, NULL, /*issparse=*/1, /*skipcommon=*/0);
 
       // copy sparsity info
       rownnz[ebase + e] = NV;
@@ -737,18 +739,8 @@ static void set0(mjModel* m, mjData* d) {
       }
 
       // average diagonal and assign
-      mjtNum tran = (A[0] + A[7] + A[14])/3;
-      mjtNum rot = (A[21] + A[28] + A[35])/3;
-
-      // if one is zero, use the other to prevent degenerate constraints
-      if (tran < mjMINVAL && rot > mjMINVAL) {
-        tran = rot;  // use rotation as fallback for translation
-      } else if (rot < mjMINVAL && tran > mjMINVAL) {
-        rot = tran;  // use translation as fallback for rotation
-      }
-
-      m->body_invweight0[2*i] = tran;
-      m->body_invweight0[2*i+1] = rot;
+      m->body_invweight0[2*i] = (A[0] + A[7] + A[14])/3;
+      m->body_invweight0[2*i+1] = (A[21] + A[28] + A[35])/3;
     }
   }
 

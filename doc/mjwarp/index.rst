@@ -631,7 +631,7 @@ Yes. Warp's ``wp.ScopedDevice`` enables multi-GPU computation
 Please see the
 `Warp documentation <https://nvidia.github.io/modules/devices.html#example-using-wp-scopeddevice-with-multiple-gpus>`__
 for details and
-`mjlab distributed training <https://github.com/mujocolab/mjlab/tree/main/docs/api/distributed_training.md>`__ for a
+`mjlab distributed training <https://mujocolab.github.io/mjlab/main/source/training/distributed_training.html>`__ for a
 reinforcement learning example.
 
 **Is MJWarp on GPU deterministic?**
@@ -988,3 +988,27 @@ is available by setting the ``NATIVECCD`` disable flag:
 
 The specialized collider generates up to 8 contact points, compared to up to 4 for the convex pipeline, and may improve
 contact stability for tasks involving box stacking or manipulation.
+
+.. TODO(taylorhowell): update this section once multiccd is on by default.
+
+CCD margin
+----------
+
+Non-zero :ref:`geom margin <body-geom-margin>` or :ref:`pair margin <contact-pair-margin>` is not supported with certain
+CCD colliders and will raise a ``NotImplementedError`` when calling :func:`mjw.put_model <mujoco_warp.put_model>`:
+
+.. list-table::
+   :width: 90%
+   :align: left
+   :widths: 3 3 4
+   :header-rows: 1
+
+   * - Geom pair
+     - Scenario
+     - Workaround
+   * - box-box, box-mesh, mesh-mesh
+     - :ref:`MULTICCD <option-flag-multiccd>` enabled
+     - Set margin to ``0`` or do not enable ``MULTICCD``
+   * - box-box
+     - :ref:`NATIVECCD <option-flag-nativeccd>` enabled (on by default)
+     - Set margin to ``0`` or disable ``NATIVECCD``

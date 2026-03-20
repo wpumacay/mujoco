@@ -61,6 +61,10 @@ std::unique_ptr<ModelHolder> ModelHolder::FromBuffer(
   return mh;
 }
 
+ModelHolder::ModelHolder() {
+  mj_defaultVFS(&vfs_);
+}
+
 ModelHolder::~ModelHolder() {
   if (data_) {
     mj_deleteData(data_);
@@ -76,6 +80,10 @@ ModelHolder::~ModelHolder() {
 
 void ModelHolder::PostInit() {
   if (spec_ && !model_) {
+#ifdef __EMSCRIPTEN__
+    // Disable threaded compilation on WASM since pthreads are not available.
+    spec_->compiler.usethread = 0;
+#endif
     model_ = mj_compile(spec_, &vfs_);
     if (!model_) {
       SetLoadError(mjs_getError(spec_));
@@ -94,7 +102,6 @@ void ModelHolder::InitFromSpec(mjSpec* spec) {
 }
 
 void ModelHolder::InitFromFile(std::string_view filepath) {
-  mj_defaultVFS(&vfs_);
   if (filepath.ends_with(".mjb")) {
     model_ = mj_loadModel(filepath.data(), &vfs_);
   } else {
@@ -108,8 +115,6 @@ void ModelHolder::InitFromFile(std::string_view filepath) {
 void ModelHolder::InitFromBuffer(std::span<const std::byte> buffer,
                                  std::string_view content_type,
                                  std::string_view filename) {
-  mj_defaultVFS(&vfs_);
-
   if (content_type == "text/xml") {
     const char* ptr = reinterpret_cast<const char*>(buffer.data());
     spec_ = mj_parseXMLString(ptr, nullptr, error_, sizeof(error_));

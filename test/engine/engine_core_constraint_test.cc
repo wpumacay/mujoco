@@ -33,7 +33,6 @@
 namespace mujoco {
 namespace {
 
-using ::testing::DoubleNear;
 using ::testing::NotNull;
 using ::testing::Pointwise;
 using CoreConstraintTest = MujocoTest;
@@ -63,6 +62,9 @@ void RotationResidual(const mjModel *model, mjData *data,
 
 // validate rotational Jacobian used in welds
 TEST_F(CoreConstraintTest, WeldRotJacobian) {
+#ifdef mjUSESINGLE
+  GTEST_SKIP() << "FD Jacobian with eps=1e-6 below float32 precision";
+#endif
   constexpr char xml[] = R"(
   <mujoco>
     <option jacobian="dense"/>
@@ -134,7 +136,8 @@ TEST_F(CoreConstraintTest, WeldRotJacobian) {
 
   // rotational Jacobian difference
   mj_jacDifPair(model, data, NULL, 2, 1, point, point,
-                NULL, NULL, NULL, jac0, jac1, jacdif, mj_isSparse(model));
+                NULL, NULL, NULL, jac0, jac1, jacdif, mj_isSparse(model),
+                /*flg_skipcommon=*/0);
 
   // formula: 0.5 * neg(quat2) * (jac1-jac2) * quat1
   mjtNum axis[3], quat3[4], quat4[4];
@@ -156,7 +159,7 @@ TEST_F(CoreConstraintTest, WeldRotJacobian) {
 
   // test that analytical and finite-differenced Jacobians match
   EXPECT_THAT(AsVector(jacFD, 3*nv),
-              Pointwise(DoubleNear(eps), AsVector(jacdif, 3*nv)));
+              Pointwise(MjNear(eps, 1e-3), AsVector(jacdif, 3*nv)));
 
   mj_deleteData(data);
   mj_deleteModel(model);
@@ -213,7 +216,7 @@ TEST_F(CoreConstraintTest, RestPenetration) {
         expected_depth = gravity * (1 - impedance) * tc_dr * tc_dr;
       }
 
-      EXPECT_THAT(depth, DoubleNear(expected_depth, 1e-10));
+      EXPECT_THAT(depth, MjNear(expected_depth, 1e-10, 1e-3));
     }
   }
 
@@ -290,7 +293,7 @@ TEST_F(CoreConstraintTest, EqualityBodySite) {
   // compare
   EXPECT_EQ(nefc_site, data->nefc);
   EXPECT_THAT(AsVector(data->efc_diagApprox, data->nefc),
-              Pointwise(DoubleNear(1e-12), dA));
+              Pointwise(MjNear(1e-12, 1e-4), dA));
 
   mj_deleteData(data);
   mj_deleteModel(model);
@@ -385,7 +388,7 @@ TEST_F(CoreConstraintTest, ConstraintUpdateImpl) {
           int i = map2efc[c];
           EXPECT_EQ(d2->efc_island[i], island);
           EXPECT_EQ(state[c], d1->efc_state[i]);
-          EXPECT_THAT(force[c], DoubleNear(d1->efc_force[i], 1e-12));
+          EXPECT_THAT(force[c], MjNear(d1->efc_force[i], 1e-12, 1e-4));
         }
 
         // compare cone Hessians
@@ -396,7 +399,7 @@ TEST_F(CoreConstraintTest, ConstraintUpdateImpl) {
                 d2->efc_state[efcadr] == mjCNSTRSTATE_CONE) {
               for (int j=0; j < 36; j++) {
                 EXPECT_THAT(d2->contact[c].H[j],
-                            DoubleNear(d1->contact[c].H[j], 1e-12));
+                            MjNear(d1->contact[c].H[j], 1e-12, 1e-4));
               }
             }
           }
@@ -409,7 +412,7 @@ TEST_F(CoreConstraintTest, ConstraintUpdateImpl) {
       }
 
       // expect monolithic total cost
-      EXPECT_THAT(cost1, DoubleNear(cost2, 1e-12));
+      EXPECT_THAT(cost1, MjNear(cost2, 1e-12, 1e-4));
 
       mju_free(jar);
     }
@@ -448,7 +451,7 @@ TEST_F(CoreConstraintTest, FlexvertEquality) {
   EXPECT_EQ(data->nefc, 18);
   for (int i = 0; i < 18; ++i) {
     EXPECT_EQ(data->efc_type[i], mjCNSTR_EQUALITY);
-    EXPECT_NEAR(data->efc_pos[i], 0, 1e-9);
+    EXPECT_NEAR(data->efc_pos[i], 0, MjTol(1e-9, 1e-5));
   }
 
   // check that efc_J has rigid-body motions in kernel
@@ -463,7 +466,7 @@ TEST_F(CoreConstraintTest, FlexvertEquality) {
     }
     mj_mulJacVec(model, data, Jqvel.data(), qvel.data());
     for (int j = 0; j < data->nefc; ++j) {
-      EXPECT_NEAR(Jqvel[j], 0, 1e-9);
+      EXPECT_NEAR(Jqvel[j], 0, MjTol(1e-9, 1e-5));
     }
   }
 
@@ -482,7 +485,7 @@ TEST_F(CoreConstraintTest, FlexvertEquality) {
     }
     mj_mulJacVec(model, data, Jqvel.data(), qvel.data());
     for (int j = 0; j < data->nefc; ++j) {
-      EXPECT_NEAR(Jqvel[j], 0, 1e-9);
+      EXPECT_NEAR(Jqvel[j], 0, MjTol(1e-9, 1e-5));
     }
   }
 
@@ -492,6 +495,9 @@ TEST_F(CoreConstraintTest, FlexvertEquality) {
 
 // Test flex strain constraint with pinned nodes attached to freejoint parent
 TEST_F(CoreConstraintTest, BoxShellPinnedParentWithFreejoint) {
+#ifdef mjUSESINGLE
+  GTEST_SKIP() << "FD Jacobian mismatch due to float32 precision";
+#endif
   static constexpr char xml[] = R"(
   <mujoco>
   <option integrator="implicitfast" jacobian="dense" gravity="0 0 0"/>
@@ -716,8 +722,8 @@ TEST_F(CoreConstraintTest, StrainConstraintNoPinning) {
   // Rotate by 45 degrees around Z axis via quaternion
   mjtNum angle = 0.785398;  // 45 degrees
   d->qpos[3] = mju_cos(angle/2);  // w
-  d->qpos[4] = 0;                  // x
-  d->qpos[5] = 0;                  // y
+  d->qpos[4] = 0;                 // x
+  d->qpos[5] = 0;                 // y
   d->qpos[6] = mju_sin(angle/2);  // z
   mj_forward(m, d);
 
@@ -742,6 +748,45 @@ TEST_F(CoreConstraintTest, StrainConstraintNoPinning) {
   mj_deleteData(d);
   mj_deleteModel(m);
 }
+
+TEST_F(CoreConstraintTest, ContactSharedDofJacobian) {
+  constexpr char xml[] = R"(
+  <mujoco>
+    <option jacobian="sparse"/>
+    <worldbody>
+      <body pos="0 0 0.5">
+        <joint type="slide" axis="0 0 1"/>
+        <geom size="0.01"/>
+        <body pos="0 0.04 0">
+          <joint type="slide" axis="0 1 0"/>
+          <geom type="sphere" size="0.05" condim="1"/>
+        </body>
+        <body pos="0 -0.04 0">
+          <joint type="slide" axis="0 1 0"/>
+          <geom type="sphere" size="0.05" condim="1"/>
+        </body>
+      </body>
+    </worldbody>
+  </mujoco>
+  )";
+  char error[1024];
+  mjModel* model = LoadModelFromString(xml, error, sizeof(error));
+  ASSERT_THAT(model, NotNull()) << error;
+  ASSERT_EQ(model->nv, 3);
+  ASSERT_TRUE(mj_isSparse(model));
+  mjData* data = mj_makeData(model);
+
+  mj_forward(model, data);
+
+  ASSERT_EQ(data->ncon, 1);
+  ASSERT_GE(data->nefc, 1);
+
+  EXPECT_EQ(data->efc_J_rownnz[0], 2);
+
+  mj_deleteData(data);
+  mj_deleteModel(model);
+}
+
 
 }  // namespace
 }  // namespace mujoco
