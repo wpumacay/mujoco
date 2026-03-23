@@ -23,7 +23,6 @@
 #include <mujoco/mujoco.h>
 #include "experimental/filament/filament/filament_context.h"
 
-
 #if defined(TLS_FILAMENT_CONTEXT)
 static thread_local mujoco::FilamentContext* g_filament_context = nullptr;
 #else

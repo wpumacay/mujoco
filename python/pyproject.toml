@@ -3,12 +3,12 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mujoco"
-version = "3.7.0"
+name = "mujoco-filament"
+version = "3.5.2"
 authors = [
-    {name = "Google DeepMind", email = "mujoco@deepmind.com"},
+    {name = "Wilbert Pumacay", email = "wilbertp@allenai.org"},
 ]
-description = "MuJoCo Physics Simulator"
+description = "A custom fork of MuJoCo, built with Filament support"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 classifiers = [
@@ -34,9 +34,9 @@ dynamic = ["readme", "scripts"]
 
 [project.urls]
 Homepage = "https://github.com/google-deepmind/mujoco"
-Documentation = "https://mujoco.readthedocs.io/en/3.7.0"
+Documentation = "https://mujoco.readthedocs.io/en/latest"
 Repository = "https://github.com/google-deepmind/mujoco"
-Changelog = "https://mujoco.readthedocs.io/en/3.7.0/changelog.html"
+Changelog = "https://mujoco.readthedocs.io/en/latest/changelog.html"
 
 [tool.setuptools]
 include-package-data = false

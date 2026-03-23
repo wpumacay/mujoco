@@ -107,7 +107,7 @@ class SceneView {
   float default_vsm_blur_width_ = 0.0f;
   float fallback_head_light_intensity_ = 0.f;
   float fallback_scene_light_intensity_ = 80'000.f;
-  float fallback_environment_light_intensity_ = 5'000.f;
+  float fallback_environment_light_intensity_ = 15'000.f;
 };
 
 }  // namespace mujoco

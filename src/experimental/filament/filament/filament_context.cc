@@ -51,7 +51,7 @@ namespace mujoco {
 FilamentContext::FilamentContext(const mjrFilamentConfig* config,
                                  const mjModel* model, mjrContext* con)
     : config_(*config), context_(con), model_(model) {
-#if defined( __EMSCRIPTEN__)
+#if defined( __EMSCRIPTEN__) || defined( __APPLE__)
   filament::Engine::Backend backend = filament::Engine::Backend::OPENGL;
 #else
   filament::Engine::Backend backend = filament::Engine::Backend::VULKAN;

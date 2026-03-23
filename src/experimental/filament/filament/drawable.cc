@@ -16,6 +16,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <numbers>
 #include <utility>
 
@@ -459,6 +460,9 @@ void Drawable::UpdateMaterial(const mjvGeom& geom, bool use_segid_color,
     params.segmentation_color.x = static_cast<float>(red) / 255.0f;
     params.segmentation_color.y = static_cast<float>(green) / 255.0f;
     params.segmentation_color.z = static_cast<float>(blue) / 255.0f;
+
+    // std::printf("Segid: %d, Red: %d, Green: %d, Blue: %d\n", geom.segid, red, green, blue);
+    // std::printf("color.x: %f, color.y: %f, color.z: %f\n", params.segmentation_color.x, params.segmentation_color.y, params.segmentation_color.z);
   }
 
   // UvScale only applies to objects that don't have explicit UV coordinates
