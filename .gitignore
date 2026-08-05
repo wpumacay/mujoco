@@ -45,3 +45,5 @@ wasm/**/dist/
 /install
 compile_commands.json
 /references
+/typings
+/*.jpg
