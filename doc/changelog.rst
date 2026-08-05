@@ -5,6 +5,15 @@ Changelog
 Upcoming version (not yet released)
 -----------------------------------
 
+General
+^^^^^^^
+
+- The MJCF grammar is now defined in a single source of truth schema file,
+  `src/xml/mjcf.schema <https://github.com/google-deepmind/mujoco/tree/main/src/xml/mjcf.schema>`__. The parser's
+  grammar table, presence constraints, keyword maps, typed attribute bindings and save policies are generated from it
+  and gated by tests, as are the schema's enum keywords and declared defaults against the C headers and
+  default-constructors.
+
 Actuation
 ^^^^^^^^^
 - Added the :ref:`pid<actuator-pid>` actuator: a PID controller with real position and velocity setpoint inputs,
@@ -46,6 +55,38 @@ Models
   held open by pinning the ring of vertices around its mouth, catching the standard humanoid dropped in from above.
   Unlike the poncho models, which are bending-only, this model exercises the 2D
   :ref:`stretch<flex-elasticity-elastic2d>` elasticity of a flex.
+
+Rendering
+^^^^^^^^^
+
+.. admonition:: Breaking API changes
+   :class: attention
+
+   - Added :ref:`light/softness<body-light-softness>`: edge softness for spotlights under physically-based lighting
+     models, given as the fraction of the cone over which intensity falls to zero. The default of 0 is a sharp-edged
+     cone which delivers the full :ref:`intensity<body-light-intensity>` everywhere inside it, so that illuminance
+     follows :math:`E = I/d^2` independent of the :ref:`cutoff<body-light-cutoff>` angle. Previously the filament
+     renderer treated the entire cone as penumbra, dimming spotlights well below their rated intensity, increasingly
+     so for narrow cutoffs.
+
+     **Migration:** Set :at:`softness` to 1 to reproduce the previous appearance of existing models.
+
+Bug fixes
+^^^^^^^^^
+
+- Fixed a bug where models with pinned interpolated flex nodes (e.g. a :ref:`flexcomp<body-flexcomp>` with
+  :at:`dof` "trilinear" and pinned vertices) could not be reloaded after saving: node coordinates within their body
+  frames were not saved, degenerating the interpolation grid. They are now saved in the new flex
+  :ref:`nodecoord<deformable-flex-nodecoord>` attribute.
+- Fixed a bug in the box-box collider where near-degenerate face clipping could generate contacts with spuriously
+  large penetration depth between nearly touching thin boxes with positive margin, causing resting stacks to explode.
+- Fixed a bug in the box-box collider where penetrations deeper than a box's smallest half-size could produce no
+  contacts, letting boxes tunnel through thin boxes. Fixes :issue:`1800`.
+- Fixed the flex stretch stiffness operator, which was the Gauss-Newton Hessian of the stretch force rather than its
+  Jacobian: the geometric (stress-proportional) term was missing. Only the tensile part of that term is added, since
+  it is positive semi-definite exactly when the edge is in tension, and its consumers require an SPD operator; the
+  stretch force itself is unchanged. This affects the implicit integrators and the implicit effective metric, so
+  flexes using ``elastic2d="stretch"`` integrate slightly differently. Bending-only flexes are unaffected.
 
 Version 3.11.0 (July 27, 2026)
 ------------------------------

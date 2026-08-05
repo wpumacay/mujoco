@@ -1043,6 +1043,7 @@ class mjCFlex: public mjCFlex_, private mjsFlex {
   const std::vector<float>& get_texcoord() const { return texcoord_; }
   const std::vector<int>& get_elemtexcoord() const { return elemtexcoord_; }
   const std::vector<std::string>& get_nodebody() const { return nodebody_; }
+  const std::vector<double>& get_node() const { return node_; }
 
   bool HasTexcoord() const;               // texcoord not null
   void DelTexcoord();                     // delete texcoord
@@ -1138,6 +1139,7 @@ class mjCMesh_ : public mjCBase {
 
 class mjCMesh: public mjCMesh_, private mjsMesh {
   friend class mjCModel;
+  friend class mjXWriter;
 
  public:
   explicit mjCMesh(mjCModel* = nullptr, mjCDef* = nullptr);
