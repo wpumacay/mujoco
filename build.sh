@@ -16,6 +16,11 @@ build_type="Release"
 
 cd ${ROOT_DIR}
 
+CCACHE_ARGS=""
+if command -v ccache >/dev/null 2>&1; then
+    CCACHE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
+fi
+
 SHOW_HELP=false
 build_filament=OFF
 build_vulkan=OFF
@@ -48,36 +53,26 @@ if [ ! -d "${USER_INSTALL_DIR}" ]; then
 fi
 
 echo "Configuring ..."
-CMAKE_CONFIG_ARGS=(
-    "-DCMAKE_BUILD_TYPE=${build_type}"
-    "-DUSE_STATIC_LIBCXX=OFF"
-    "-DBUILD_SHARED_LIB=OFF"
-    "-DMUJOCO_BUILD_EXAMPLES=ON"
-    "-DMUJOCO_BUILD_SIMULATE=${build_simulate}"
-    "-DMUJOCO_BUILD_TESTS=OFF"
-    "-DMUJOCO_TEST_PYTHON_UTIL=OFF"
-    "-DMUJOCO_WITH_USD=OFF"
-    # "-DMUJOCO_USE_FILAMENT_MJR_COMPAT=OFF"
-    "-DMUJOCO_USE_FILAMENT=${build_filament}"
-    "-DMUJOCO_BUILD_STUDIO=${build_studio}"
-    "-DFILAMENT_SUPPORTS_VULKAN=${build_vulkan}"
-    "-DFILAMENT_SKIP_SAMPLES=ON"
-    "-DCMAKE_INSTALL_PREFIX=${USER_INSTALL_DIR}"
-    # "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF"
-    # "-DCMAKE_INSTALL_LIBDIR=lib"
-    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-    # Several dependencies generate deprecated warnings on MacOS.
-    "-DCMAKE_CXX_FLAGS=\"-Wno-error=deprecated-declarations\""
-    # This flag defines _ITERATOR_DEBUG_LEVEL=0 which conflicts with debug builds
-    "-DFILAMENT_SHORTEN_MSVC_COMPILATION=OFF"
-)
 
-if [[ -n "${CMAKE_ARGS}" ]]; then
-    read -a cmake_args_arr <<<"$CMAKE_ARGS"
-    CMAKE_CONFIG_ARGS+=("${cmake_args_arr[@]}")
-fi
-
-cmake -B build "${CMAKE_CONFIG_ARGS[@]}"
+cmake -B build \
+    -DCMAKE_BUILD_TYPE=${build_type} \
+    -DUSE_STATIC_LIBCXX=OFF \
+    -DBUILD_SHARED_LIBS=OFF \
+    -DMUJOCO_BUILD_EXAMPLES=ON \
+    -DMUJOCO_BUILD_SIMULATE=${build_simulate} \
+    -DMUJOCO_BUILD_TESTS=OFF \
+    -DMUJOCO_TEST_PYTHON_UTIL=OFF \
+    -DMUJOCO_WITH_USD=OFF \
+    -DMUJOCO_USE_FILAMENT=${build_filament} \
+    -DMUJOCO_BUILD_STUDIO=${build_studio} \
+    -DFILAMENT_SUPPORTS_VULKAN=${build_vulkan} \
+    -DFILAMENT_SKIP_SAMPLES=ON \
+    -DCMAKE_INSTALL_PREFIX=${USER_INSTALL_DIR} \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+    -DCMAKE_CXX_FLAGS=\"-Wno-error=deprecated-declarations\" \
+    -DFILAMENT_SHORTEN_MSVC_COMPILATION=OFF \
+    ${CCACHE_ARGS} \
+    ${CMAKE_ARGS}
 
 echo "Building ..."
 
@@ -93,7 +88,7 @@ cmake --install build
 echo "Copy plugins to install directory"
 
 mkdir -p ${USER_INSTALL_DIR}/mujoco_plugin
-cp ${ROOT_DIR}/build/lib/lib*.a ${USER_INSTALL_DIR}/lib
+# cp ${ROOT_DIR}/build/lib/lib*.a ${USER_INSTALL_DIR}/lib
 cp ${ROOT_DIR}/build/lib/libactuator.* ${USER_INSTALL_DIR}/mujoco_plugin
 cp ${ROOT_DIR}/build/lib/libelasticity.* ${USER_INSTALL_DIR}/mujoco_plugin
 cp ${ROOT_DIR}/build/lib/libsensor.* ${USER_INSTALL_DIR}/mujoco_plugin

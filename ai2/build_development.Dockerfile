@@ -6,7 +6,7 @@ ENV TZ="America/Los_Angeles"
 RUN :\
     && apt-get update \
     && apt-get install -y \
-        build-essential pkg-config curl git wget cmake unzip ninja-build python3-dev \
+        build-essential pkg-config curl git wget cmake ccache unzip ninja-build python3-dev \
         man-db manpages manpages-dev manpages-posix manpages-posix-dev \
         libgl1-mesa-dev libwayland-dev libxinerama-dev libxkbcommon-dev libxrandr-dev libxi-dev libxcursor-dev \
     && rm -rf /var/lib/apt/lists/* \
