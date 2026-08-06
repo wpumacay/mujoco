@@ -26,6 +26,7 @@ build_filament=OFF
 build_vulkan=OFF
 build_studio=OFF
 build_simulate=ON
+build_samples=OFF
 install_dir=""
 njobs=4
 
@@ -36,6 +37,7 @@ while [[ $# -gt 0 ]]; do
         --filament) build_filament=ON; shift ;;
         --vulkan) build_vulkan=ON; shift ;;
         --studio) build_studio=ON; shift ;;
+        --samples) build_samples=ON; shift ;;
         --njobs) njobs="$2"; shift 2 ;;
         --install-dir) install_dir="$2"; shift 2 ;;
         *) echo "Unkown option: $1"; exit 1 ;;
@@ -58,13 +60,15 @@ cmake -B build \
     -DCMAKE_BUILD_TYPE=${build_type} \
     -DUSE_STATIC_LIBCXX=OFF \
     -DBUILD_SHARED_LIBS=OFF \
-    -DMUJOCO_BUILD_EXAMPLES=ON \
+    -DMUJOCO_BUILD_EXAMPLES=${build_samples} \
+    -DMUJOCO_BUILD_DEV_EXAMPLES=${build_samples} \
     -DMUJOCO_BUILD_SIMULATE=${build_simulate} \
     -DMUJOCO_BUILD_TESTS=OFF \
     -DMUJOCO_TEST_PYTHON_UTIL=OFF \
     -DMUJOCO_WITH_USD=OFF \
     -DMUJOCO_USE_FILAMENT=${build_filament} \
     -DMUJOCO_BUILD_STUDIO=${build_studio} \
+    -DMUJOCO_USE_FILAMENT_MJR_COMPAT=${build_filament} \
     -DFILAMENT_SUPPORTS_VULKAN=${build_vulkan} \
     -DFILAMENT_SKIP_SAMPLES=ON \
     -DCMAKE_INSTALL_PREFIX=${USER_INSTALL_DIR} \

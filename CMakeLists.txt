@@ -49,6 +49,7 @@ if(NOT EMSCRIPTEN)
   option(MUJOCO_USE_FILAMENT "Use filament rendering" OFF)
   # Allows filament renderer to be used with mjr API; disables src/render to prevent conflicts.
   option(MUJOCO_USE_FILAMENT_MJR_COMPAT "Use filament mjr compatibility layer" OFF)
+  option(MUJOCO_BUILD_DEV_EXAMPLES "Build custom samples from this fork's /dev folder" OFF)
 endif()
 
 if(EMSCRIPTEN)
@@ -272,8 +273,12 @@ if(MUJOCO_BUILD_STUDIO)
   add_subdirectory(src/experimental/studio)
 endif()
 
-if(MUJOCO_BUILD_EXAMPLES)
-  add_subdirectory(sample)
+# if(MUJOCO_BUILD_EXAMPLES)
+#   add_subdirectory(sample)
+# endif()
+
+if(MUJOCO_BUILD_DEV_EXAMPLES)
+  add_subdirectory(dev/cpp)
 endif()
 
 if(MUJOCO_WITH_USD)
