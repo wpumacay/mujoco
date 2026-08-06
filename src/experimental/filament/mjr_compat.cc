@@ -19,6 +19,7 @@
 #include <mujoco/mjrfilament.h>
 #include <mujoco/mujoco.h>
 #include "experimental/filament/compat/scene_bridge.h"
+#include "experimental/platform/resources.h"
 #include "render/filament/mjrfilament_cpp.h"
 
 // This library implements the entirety of mujoco's mjr API. You can link this
@@ -214,6 +215,8 @@ void mjr_makeFilamentContext(const mjModel* m, const mjrfContextConfig* cfg,
 
 void mjr_makeContext(const mjModel* m, mjrContext* con, int fontscale) {
   mjr_freeContext(con);
+
+  mujoco::platform::RegisterResourceProviders();
 
   mjrfContextConfig cfg;
   mjrf_defaultContextConfig(&cfg);
