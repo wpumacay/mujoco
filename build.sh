@@ -27,6 +27,7 @@ build_vulkan=OFF
 build_studio=OFF
 build_simulate=ON
 build_samples=OFF
+deps_dir=""
 install_dir=""
 njobs=4
 
@@ -39,6 +40,7 @@ while [[ $# -gt 0 ]]; do
         --studio) build_studio=ON; shift ;;
         --samples) build_samples=ON; shift ;;
         --njobs) njobs="$2"; shift 2 ;;
+        --deps-dir) deps_dir="$2"; shift 2 ;;
         --install-dir) install_dir="$2"; shift 2 ;;
         *) echo "Unkown option: $1"; exit 1 ;;
     esac
@@ -49,9 +51,14 @@ if [[ "${build_filament}" == "ON" ]]; then
 fi
 
 [[ -n $install_dir ]] && USER_INSTALL_DIR="${install_dir}" || USER_INSTALL_DIR="${ROOT_DIR}/install"
+[[ -n $deps_dir ]] && DEPENDENCIES_DIR="${deps_dir}" || DEPENDENCIES_DIR="${ROOT_DIR}/deps"
 
 if [ ! -d "${USER_INSTALL_DIR}" ]; then
     mkdir -p $USER_INSTALL_DIR
+fi
+
+if [ ! -d "${DEPENDENCIES_DIR}" ]; then
+    mkdir -p $DEPENDENCIES_DIR
 fi
 
 echo "Configuring ..."
@@ -71,6 +78,7 @@ cmake -B build \
     -DMUJOCO_USE_FILAMENT_MJR_COMPAT=${build_filament} \
     -DFILAMENT_SUPPORTS_VULKAN=${build_vulkan} \
     -DFILAMENT_SKIP_SAMPLES=ON \
+    -DFETCHCONTENT_BASE_DIR=${DEPENDENCIES_DIR} \
     -DCMAKE_INSTALL_PREFIX=${USER_INSTALL_DIR} \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DCMAKE_CXX_FLAGS=\"-Wno-error=deprecated-declarations\" \

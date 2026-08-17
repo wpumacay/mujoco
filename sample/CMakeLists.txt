@@ -91,6 +91,12 @@ target_link_libraries(compile mujoco::mujoco)
 target_link_libraries(dependencies mujoco::mujoco)
 target_link_libraries(testspeed mujoco::mujoco)
 
+if(TARGET mujoco::platform)
+  target_link_libraries(compile mujoco::platform)
+  target_link_libraries(dependencies mujoco::platform)
+  target_link_libraries(testspeed mujoco::platform)
+endif()
+
 # Build samples that require GLFW.
 
 add_executable(basic basic.cc)
@@ -112,6 +118,11 @@ target_link_libraries(
   Threads::Threads
 )
 target_link_options(record PRIVATE ${MUJOCO_SAMPLE_LINK_OPTIONS})
+
+if(TARGET mujoco::platform)
+  target_link_libraries(basic mujoco::platform)
+  target_link_libraries(record mujoco::platform)
+endif()
 
 if(APPLE AND MUJOCO_BUILD_MACOS_FRAMEWORKS)
   embed_in_bundle(basic simulate)
