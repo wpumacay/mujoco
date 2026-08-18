@@ -30,16 +30,20 @@ build_samples=OFF
 deps_dir=""
 install_dir=""
 njobs=4
+fresh=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         -h|--help) SHOW_HELP=true; shift ;;
         --debug) build_type="Debug"; shift ;;
+        --rel-with-deb) build_type="RelWithDebInfo"; shift ;;
         --filament) build_filament=ON; shift ;;
         --vulkan) build_vulkan=ON; shift ;;
         --studio) build_studio=ON; shift ;;
         --samples) build_samples=ON; shift ;;
         --njobs) njobs="$2"; shift 2 ;;
+        --fresh) fresh=true; shift ;;
+        --build-dir) build_dir="$2"; shift 2 ;;
         --deps-dir) deps_dir="$2"; shift 2 ;;
         --install-dir) install_dir="$2"; shift 2 ;;
         *) echo "Unkown option: $1"; exit 1 ;;
@@ -50,8 +54,8 @@ if [[ "${build_filament}" == "ON" ]]; then
     build_simulate=OFF
 fi
 
-[[ -n $install_dir ]] && USER_INSTALL_DIR="${install_dir}" || USER_INSTALL_DIR="${ROOT_DIR}/install"
 [[ -n $deps_dir ]] && DEPENDENCIES_DIR="${deps_dir}" || DEPENDENCIES_DIR="${ROOT_DIR}/deps"
+[[ -n $install_dir ]] && USER_INSTALL_DIR="${install_dir}" || USER_INSTALL_DIR="${ROOT_DIR}/install"
 
 if [ ! -d "${USER_INSTALL_DIR}" ]; then
     mkdir -p $USER_INSTALL_DIR
@@ -61,9 +65,11 @@ if [ ! -d "${DEPENDENCIES_DIR}" ]; then
     mkdir -p $DEPENDENCIES_DIR
 fi
 
+[ "$fresh" == "true" ] && FRESH_CMD="--fresh" || FRESH_CMD=""
+
 echo "Configuring ..."
 
-cmake -B build \
+cmake $FRESH_CMD -S . -B build \
     -DCMAKE_BUILD_TYPE=${build_type} \
     -DUSE_STATIC_LIBCXX=OFF \
     -DBUILD_SHARED_LIBS=OFF \
