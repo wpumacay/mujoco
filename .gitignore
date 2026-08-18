@@ -46,5 +46,6 @@ wasm/**/dist/
 compile_commands.json
 /references
 /typings
+/deps
 /*.jpg
 /*.png

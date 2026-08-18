@@ -68,7 +68,7 @@ function(configure_studio_target TARGET_NAME)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${STUDIO_ASSETS_DIR}
         COMMAND ${CMAKE_COMMAND}
             -E copy
-                "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/../_deps/atkinson_hyperlegible_next-src/fonts/variable/AtkinsonHyperlegibleNext[wght].ttf"
+                "${FETCHCONTENT_BASE_DIR}/atkinson_hyperlegible_next-src/fonts/variable/AtkinsonHyperlegibleNext[wght].ttf"
                 ${STUDIO_ASSETS_DIR}/AtkinsonHyperlegibleNext[wght].ttf
         COMMENT "Copying AtkinsonHyperlegibleNext font to build directory"
     )
@@ -78,7 +78,7 @@ function(configure_studio_target TARGET_NAME)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${STUDIO_ASSETS_DIR}
         COMMAND ${CMAKE_COMMAND}
             -E copy
-                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/../_deps/font_awesome-src/fonts/fontawesome-webfont.ttf
+                ${FETCHCONTENT_BASE_DIR}/font_awesome-src/fonts/fontawesome-webfont.ttf
                 ${STUDIO_ASSETS_DIR}
         COMMENT "Copying fontawesome-webfont.ttf to build directory"
     )
@@ -88,7 +88,7 @@ function(configure_studio_target TARGET_NAME)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${STUDIO_ASSETS_DIR}
         COMMAND ${CMAKE_COMMAND}
             -E copy
-                "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/../_deps/atkinson_hyperlegible_mono-src/fonts/ttf/AtkinsonHyperlegibleMono-Regular.ttf"
+                "${FETCHCONTENT_BASE_DIR}/atkinson_hyperlegible_mono-src/fonts/ttf/AtkinsonHyperlegibleMono-Regular.ttf"
                 ${STUDIO_ASSETS_DIR}/AtkinsonHyperlegibleMono-Regular.ttf
         COMMENT "Copying AtkinsonHyperlegibleMono-Regular font to build directory"
     )
