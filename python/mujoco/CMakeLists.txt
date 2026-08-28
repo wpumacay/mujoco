@@ -151,7 +151,7 @@ if(NOT TARGET mujoco::platform)
     list(APPEND MUJOCO_PLATFORM_HINTS "${MUJOCO_FRAMEWORK}/mujoco.framework/Versions/A")
   endif()
   find_library(
-    MUJOCO_PLATFORM_LIBRARY mujoco_platform HINTS ${MUJOCO_PLATFORM_HINTS}
+    MUJOCO_PLATFORM_LIBRARY libmujoco_platform.a HINTS ${MUJOCO_PLATFORM_HINTS} REQUIRED
   )
   if(MUJOCO_PLATFORM_LIBRARY)
     message(STATUS "Found mujoco_platform library at ${MUJOCO_PLATFORM_LIBRARY}")
@@ -159,7 +159,11 @@ if(NOT TARGET mujoco::platform)
     set_target_properties(mujoco_platform PROPERTIES IMPORTED_LOCATION "${MUJOCO_PLATFORM_LIBRARY}")
     add_library(mujoco::platform ALIAS mujoco_platform)
 
-    set(PLATFORM_INCLUDES "${MUJOCO_INCLUDE}" "${MUJOCO_INCLUDE}/mujoco" "${MUJOCO_INCLUDE}/SDL2")
+    set(PLATFORM_INCLUDES
+      "${MUJOCO_INCLUDE}"
+      "${MUJOCO_INCLUDE}/mujoco"
+      "/Users/wilbertp/workspace/mujoco/dev/src"
+    )
     set_target_properties(mujoco_platform PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES "${PLATFORM_INCLUDES}"
     )

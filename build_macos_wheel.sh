@@ -26,8 +26,10 @@ build_filament=OFF
 build_vulkan=OFF
 build_studio=OFF
 build_simulate=ON
+deps_dir=""
 install_dir=""
 njobs=4
+fresh=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -37,6 +39,8 @@ while [[ $# -gt 0 ]]; do
         --vulkan) build_vulkan=ON; shift ;;
         --studio) build_studio=ON; shift ;;
         --njobs) njobs="$2"; shift 2 ;;
+        --fresh) fresh=true; shift ;;
+        --deps-dir) deps_dir="$2"; shift 2 ;;
         --install-dir) install_dir="$2"; shift 2 ;;
         *) echo "Unkown option: $1"; exit 1 ;;
     esac
@@ -46,18 +50,25 @@ if [[ "${build_filament}" == "ON" ]]; then
     build_simulate=OFF
 fi
 
+[[ -n $deps_dir ]] && DEPENDENCIES_DIR="${deps_dir}" || DEPENDENCIES_DIR="${ROOT_DIR}/deps"
 [[ -n $install_dir ]] && USER_INSTALL_DIR="${install_dir}" || USER_INSTALL_DIR="${ROOT_DIR}/install"
 
 if [ ! -d "${USER_INSTALL_DIR}" ]; then
     mkdir -p $USER_INSTALL_DIR
 fi
 
+if [ ! -d "${DEPENDENCIES_DIR}" ]; then
+    mkdir -p $DEPENDENCIES_DIR
+fi
+
+[ "$fresh" == "true" ] && FRESH_CMD="--fresh" || FRESH_CMD=""
+
 echo "Configuring ..."
 
-cmake -B build \
+cmake $FRESH_CMD -S . -B build \
     -DCMAKE_BUILD_TYPE=${build_type} \
     -DUSE_STATIC_LIBCXX=OFF \
-    -DBUILD_SHARED_LIBS=OFF \
+    -DBUILD_SHARED_LIBS=ON \
     -DMUJOCO_BUILD_EXAMPLES=OFF \
     -DMUJOCO_BUILD_SIMULATE=${build_simulate} \
     -DMUJOCO_BUILD_TESTS=OFF \
@@ -69,6 +80,8 @@ cmake -B build \
     -DFILAMENT_SUPPORTS_METAL=OFF \
     -DFILAMENT_SKIP_SAMPLES=ON \
     -DMUJOCO_BUILD_STUDIO=${build_studio} \
+    -DMUJOCO_USE_FILAMENT_MJR_COMPAT=${build_filament} \
+    -DFETCHCONTENT_BASE_DIR=${DEPENDENCIES_DIR} \
     -DCMAKE_INSTALL_PREFIX=${USER_INSTALL_DIR} \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DCMAKE_CXX_FLAGS=\"-Wno-error=deprecated-declarations\" \
@@ -90,7 +103,7 @@ cmake --install build
 echo "Copy plugins to install directory"
 
 mkdir -p ${USER_INSTALL_DIR}/mujoco_plugin
-# cp ${ROOT_DIR}/build/lib/lib*.a ${USER_INSTALL_DIR}/lib
+cp ${ROOT_DIR}/build/lib/lib*.a ${USER_INSTALL_DIR}/lib
 cp ${ROOT_DIR}/build/lib/libactuator.* ${USER_INSTALL_DIR}/mujoco_plugin
 cp ${ROOT_DIR}/build/lib/libelasticity.* ${USER_INSTALL_DIR}/mujoco_plugin
 cp ${ROOT_DIR}/build/lib/libsensor.* ${USER_INSTALL_DIR}/mujoco_plugin
@@ -111,5 +124,5 @@ export MUJOCO_CMAKE_ARGS="-DCMAKE_INTERPROCEDURAL_OPTIMIZATION:BOOL=OFF ${CCACHE
 uv build -v --wheel --force-pep517 ${ROOT_DIR}/python/dist/mujoco-*.tar.gz --out-dir ${ROOT_DIR}/python/dist
 
 # Clean install dir afterwards, to avoid being used as default search path
-rm -rf ${USER_INSTALL_DIR}
+# rm -rf ${USER_INSTALL_DIR}
 
